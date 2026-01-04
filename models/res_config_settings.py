@@ -91,6 +91,23 @@ class ResConfigSettings(models.TransientModel):
             )
 
             if response.status_code == 200:
+                # Récupérer et stocker l'API key et le webhook secret retournés par le serveur
+                response_data = response.json()
+                api_key = response_data.get('api_key')
+                webhook_secret = response_data.get('webhook_secret')
+
+                if api_key:
+                    ICP.set_param('ochat.api_key', api_key)
+                    _logger.info(f"🔑 API key received and stored")
+                else:
+                    _logger.warning("⚠️ No API key in registration response")
+
+                if webhook_secret:
+                    ICP.set_param('ochat.webhook_secret', webhook_secret)
+                    _logger.info(f"🔐 Webhook secret received and stored")
+                else:
+                    _logger.warning("⚠️ No webhook secret in registration response")
+
                 ICP.set_param('ochat.is_registered', 'True')
                 # Recharger les valeurs
                 self.ochat_is_registered = True

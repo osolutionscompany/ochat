@@ -15,8 +15,45 @@ class OchatWebhook(http.Controller):
         Endpoint webhook pour recevoir les messages du serveur central
         """
         try:
+            # Vérifier l'authentification
+            authorization = request.httprequest.headers.get('Authorization')
+            if not authorization:
+                _logger.error("❌ Missing Authorization header in webhook call")
+                return {
+                    'status': 'error',
+                    'message': 'Missing Authorization header'
+                }
+
+            # Récupérer le webhook secret stocké
+            ICP = request.env['ir.config_parameter'].sudo()
+            expected_secret = ICP.get_param('ochat.webhook_secret')
+
+            if not expected_secret:
+                _logger.error("❌ No webhook secret configured")
+                return {
+                    'status': 'error',
+                    'message': 'Webhook not configured'
+                }
+
+            # Vérifier le token
+            if not authorization.startswith('Bearer '):
+                _logger.error("❌ Invalid Authorization header format")
+                return {
+                    'status': 'error',
+                    'message': 'Invalid Authorization header format'
+                }
+
+            provided_secret = authorization.replace('Bearer ', '')
+            if provided_secret != expected_secret:
+                _logger.error(f"❌ Invalid webhook secret")
+                return {
+                    'status': 'error',
+                    'message': 'Invalid webhook secret'
+                }
+
+            # Authentification réussie, traiter le message
             data = json.loads(request.httprequest.data)
-            _logger.info(f"📨 Received message from central server: {data}")
+            _logger.info(f"📨 Received authenticated message from central server: {data}")
 
             # Récupérer les informations du message
             source_uuid = data.get('source_instance_uuid')

@@ -165,6 +165,7 @@ class OchatConnection(models.Model):
         instance_uuid = ICP.get_param('ochat.instance_uuid')
         instance_name = ICP.get_param('ochat.instance_name')
         central_server_url = ICP.get_param('ochat.central_server_url')
+        api_key = ICP.get_param('ochat.api_key')
         is_registered = ICP.get_param('ochat.is_registered', 'False') == 'True'
 
         if not instance_name:
@@ -173,6 +174,9 @@ class OchatConnection(models.Model):
         if not is_registered:
             raise UserError(_("Please register this instance with the central server first (Settings > O'Chat)"))
 
+        if not api_key:
+            raise UserError(_("Missing API key. Please re-register this instance."))
+
         # Préparer les données du message
         data = {
             'source_instance_uuid': instance_uuid,
@@ -180,11 +184,18 @@ class OchatConnection(models.Model):
             'content': f"🧪 Test message from {instance_name}!"
         }
 
+        # Préparer les headers avec authentification
+        headers = {
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json'
+        }
+
         try:
             # Envoyer le message via le serveur central
             response = requests.post(
                 f"{central_server_url}/api/v1/messages/send",
                 json=data,
+                headers=headers,
                 timeout=10
             )
 

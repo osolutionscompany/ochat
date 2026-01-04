@@ -72,9 +72,13 @@ class DiscussChannel(models.Model):
         ICP = self.env['ir.config_parameter'].sudo()
         instance_uuid = ICP.get_param('ochat.instance_uuid')
         central_server_url = ICP.get_param('ochat.central_server_url')
+        api_key = ICP.get_param('ochat.api_key')
 
         if not instance_uuid or not central_server_url:
             raise UserError(_("O'Chat is not properly configured"))
+
+        if not api_key:
+            raise UserError(_("Missing API key. Please re-register this instance."))
 
         # Préparer les pièces jointes si présentes
         attachments = []
@@ -96,10 +100,17 @@ class DiscussChannel(models.Model):
             'attachments': attachments,
         }
 
+        # Préparer les headers avec authentification
+        headers = {
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json'
+        }
+
         # Envoyer via le serveur central
         response = requests.post(
             f"{central_server_url}/api/v1/messages/send",
             json=data,
+            headers=headers,
             timeout=30  # Augmenté à 30s pour les fichiers volumineux
         )
 
