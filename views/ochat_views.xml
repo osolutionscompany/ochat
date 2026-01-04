@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- List view for Connections -->
+    <record id="view_ochat_connection_list" model="ir.ui.view">
+        <field name="name">ochat.connection.list</field>
+        <field name="model">ochat.connection</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="partner_id"/>
+                <field name="remote_instance_uuid"/>
+                <field name="status" widget="badge"
+                       decoration-success="status == 'active'"
+                       decoration-warning="status == 'pending'"
+                       decoration-danger="status == 'blocked'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form view for Connection -->
+    <record id="view_ochat_connection_form" model="ir.ui.view">
+        <field name="name">ochat.connection.form</field>
+        <field name="model">ochat.connection</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_send_test_message"
+                            string="Send Test Message"
+                            type="object"
+                            class="btn-primary"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="partner_id" placeholder="Select contact partner"/>
+                        <field name="remote_instance_uuid"
+                               placeholder="UUID of the remote instance"/>
+                        <field name="status"/>
+                        <field name="channel_id" readonly="1"/>
+                    </group>
+                    <notebook>
+                        <page string="Additional Members" name="members">
+                            <field name="partner_ids">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="email"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Actions -->
+    <record id="action_ochat_connections" model="ir.actions.act_window">
+        <field name="name">O'Chat Connections</field>
+        <field name="res_model">ochat.connection</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem
+            id="menu_ochat_configuration"
+            name="O'Chat configuration"
+            parent="mail.menu_root_discuss"
+            sequence="10"
+    />
+
+    <menuitem id="menu_ochat_connections"
+              name="Connections"
+              parent="menu_ochat_configuration"
+              action="action_ochat_connections"
+              sequence="5"/>
+
+
+    <menuitem id="menu_purchase_general_settings"
+              name="Settings"
+              parent="menu_ochat_configuration"
+              sequence="10"
+              action="action_ochat_config"
+              groups="base.group_system"/>
+</odoo>
