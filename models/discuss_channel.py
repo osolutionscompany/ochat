@@ -3,6 +3,7 @@ import base64
 import requests
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError, UserError
+from .crypto_helper import encrypt_message_hybrid
 
 _logger = logging.getLogger(__name__)
 
@@ -92,12 +93,31 @@ class DiscussChannel(models.Model):
                 })
                 _logger.info(f"📎 Preparing attachment: {attachment.name} ({attachment.mimetype})")
 
-        # Préparer les données du message
+        # Récupérer la clé publique du destinataire
+        try:
+            public_key_response = requests.get(
+                f"{central_server_url}/api/v1/instances/{self.ochat_connection_id.remote_instance_uuid}/public_key",
+                timeout=10
+            )
+            if public_key_response.status_code != 200:
+                raise UserError(_("Could not retrieve recipient's public key"))
+
+            recipient_public_key = public_key_response.json().get('public_key')
+            if not recipient_public_key:
+                raise UserError(_("Recipient has no public key configured"))
+
+        except requests.exceptions.RequestException as e:
+            raise UserError(f"Failed to fetch recipient's public key: {str(e)}")
+
+        # Chiffrer le message et les attachments avec la clé publique du destinataire
+        _logger.info("🔒 Encrypting message before sending...")
+        encrypted_data = encrypt_message_hybrid(content, attachments, recipient_public_key)
+
+        # Préparer les données du message (maintenant chiffrées)
         data = {
             'source_instance_uuid': instance_uuid,
             'target_instance_uuid': self.ochat_connection_id.remote_instance_uuid,
-            'content': content,
-            'attachments': attachments,
+            'encrypted_data': encrypted_data  # Envoyer les données chiffrées
         }
 
         # Préparer les headers avec authentification

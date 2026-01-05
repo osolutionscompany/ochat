@@ -3,6 +3,7 @@ import json
 
 from odoo import http
 from odoo.http import request
+from odoo.addons.o_chat.models.crypto_helper import decrypt_message_hybrid
 
 _logger = logging.getLogger(__name__)
 
@@ -53,13 +54,46 @@ class OchatWebhook(http.Controller):
 
             # Authentification réussie, traiter le message
             data = json.loads(request.httprequest.data)
-            _logger.info(f"📨 Received authenticated message from central server: {data}")
+            _logger.info(f"📨 Received authenticated message from central server")
 
             # Récupérer les informations du message
             source_uuid = data.get('source_instance_uuid')
-            content = data.get('content')
             message_id = data.get('message_id')
-            attachments_data = data.get('attachments', [])
+
+            # Vérifier si le message est chiffré
+            encrypted_data = data.get('encrypted_data')
+
+            if encrypted_data:
+                # Message chiffré - déchiffrer avec notre clé privée
+                _logger.info(f"🔒 Encrypted message detected, decrypting...")
+
+                # Récupérer notre clé privée
+                ICP = request.env['ir.config_parameter'].sudo()
+                private_key_pem = ICP.get_param('ochat.private_key')
+
+                if not private_key_pem:
+                    _logger.error("❌ No private key found - cannot decrypt message")
+                    return {
+                        'status': 'error',
+                        'message': 'No private key configured'
+                    }
+
+                try:
+                    # Déchiffrer le message
+                    decrypted = decrypt_message_hybrid(encrypted_data, private_key_pem)
+                    content = decrypted.get('content', '')
+                    attachments_data = decrypted.get('attachments', [])
+                    _logger.info(f"✅ Message decrypted successfully")
+                except Exception as e:
+                    _logger.error(f"❌ Failed to decrypt message: {str(e)}")
+                    return {
+                        'status': 'error',
+                        'message': f'Decryption failed: {str(e)}'
+                    }
+            else:
+                # Message en clair (rétrocompatibilité)
+                content = data.get('content')
+                attachments_data = data.get('attachments', [])
 
             if not source_uuid:
                 _logger.error(f"❌ Missing required field: source_uuid")

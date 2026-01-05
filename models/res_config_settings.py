@@ -3,6 +3,7 @@ import requests
 import logging
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
+from .crypto_helper import generate_rsa_keypair
 
 _logger = logging.getLogger(__name__)
 
@@ -74,12 +75,21 @@ class ResConfigSettings(models.TransientModel):
         if not instance_name:
             raise UserError(_("Please set an Instance Name before registering."))
 
-        # Préparer les données d'enregistrement
+        # Générer une paire de clés RSA pour le chiffrement E2E
+        _logger.info("🔐 Generating RSA keypair for encryption...")
+        private_key_pem, public_key_pem = generate_rsa_keypair()
+
+        # Stocker la clé privée localement (jamais partagée!)
+        ICP.set_param('ochat.private_key', private_key_pem)
+        _logger.info("🔑 Private key stored securely")
+
+        # Préparer les données d'enregistrement avec la clé publique
         data = {
             'uuid': instance_uuid,
             'name': instance_name,
             'domain': base_url,
-            'webhook_url': webhook_url
+            'webhook_url': webhook_url,
+            'public_key': public_key_pem  # Envoyer la clé publique au serveur
         }
 
         try:
