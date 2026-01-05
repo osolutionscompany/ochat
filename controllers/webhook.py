@@ -168,3 +168,107 @@ class OchatWebhook(http.Controller):
                 'status': 'error',
                 'message': str(e)
             }
+
+    @http.route('/o_chat/webhook/status', type='json', auth='none', methods=['POST'], csrf=False)
+    def receive_status_update(self, **kwargs):
+        """
+        Endpoint webhook pour recevoir les notifications de changement de statut
+        Appelé par FastAPI quand le statut d'un message change
+        """
+        try:
+            # Vérifier l'authentification
+            authorization = request.httprequest.headers.get('Authorization')
+            if not authorization:
+                _logger.error("❌ Missing Authorization header in status webhook")
+                return {
+                    'status': 'error',
+                    'message': 'Missing Authorization header'
+                }
+
+            # Récupérer le webhook secret
+            ICP = request.env['ir.config_parameter'].sudo()
+            expected_secret = ICP.get_param('ochat.webhook_secret')
+
+            if not expected_secret:
+                _logger.error("❌ No webhook secret configured")
+                return {
+                    'status': 'error',
+                    'message': 'Webhook not configured'
+                }
+
+            # Vérifier le token
+            provided_secret = authorization.replace('Bearer ', '')
+            if provided_secret != expected_secret:
+                _logger.error("❌ Invalid webhook secret in status update")
+                return {
+                    'status': 'error',
+                    'message': 'Unauthorized'
+                }
+
+            # Récupérer les données de la requête
+            data = request.get_json_data()
+            if not data:
+                _logger.error("❌ No data in status update request")
+                return {
+                    'status': 'error',
+                    'message': 'No data provided'
+                }
+
+            message_id = data.get('message_id')
+            status = data.get('status')
+            timestamp = data.get('timestamp')
+            metadata = data.get('metadata', {})
+
+            if not message_id or not status:
+                _logger.error("❌ Missing required fields in status update")
+                return {
+                    'status': 'error',
+                    'message': 'Missing required fields'
+                }
+
+            # Créer un environnement Odoo avec l'utilisateur admin
+            env = request.env(user=1)
+
+            # Chercher le message mail correspondant dans Odoo
+            # Le message_id de FastAPI est stocké dans le corps du message ou comme référence
+            # Pour l'instant, on log juste la notification
+            # TODO: Stocker le message_id FastAPI quelque part pour pouvoir retrouver le message Odoo
+
+            _logger.info(
+                f"📬 Status update received: Message {message_id} → {status} "
+                f"(metadata: {metadata})"
+            )
+
+            # Afficher des logs différents selon le statut
+            if status == 'delivered':
+                retry_count = metadata.get('retry_count', 0)
+                if retry_count > 0:
+                    _logger.info(f"✅ Message {message_id} delivered after {retry_count} retries")
+                else:
+                    _logger.info(f"✅ Message {message_id} delivered on first attempt")
+
+            elif status == 'read':
+                read_at = metadata.get('read_at')
+                _logger.info(f"👁️  Message {message_id} was read at {read_at}")
+
+            elif status == 'failed':
+                retry_count = metadata.get('retry_count', 0)
+                error = metadata.get('error', 'Unknown error')
+                _logger.warning(
+                    f"❌ Message {message_id} failed definitively after {retry_count} attempts: {error}"
+                )
+
+            # TODO: Mettre à jour l'interface Odoo pour afficher le statut
+            # Par exemple, ajouter une icône de statut sur le message dans Discuss
+
+            return {
+                'status': 'received',
+                'message': f'Status update processed: {status}'
+            }
+
+        except Exception as e:
+            _logger.error(f"❌ Error processing status update: {str(e)}")
+            return {
+                'status': 'error',
+                'message': str(e)
+            }
