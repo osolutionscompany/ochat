@@ -3,7 +3,7 @@
 
     <!-- Patch pour afficher l'icône de statut sur les messages O'Chat -->
     <t t-name="mail.Message" t-inherit="mail.Message" t-inherit-mode="extension">
-        <xpath expr="//div[hasclass('o-mail-Message-content')]" position="inside">
+        <xpath expr="//div[hasclass('o-mail-Message-textContent')]" position="inside">
             <!-- Afficher le statut uniquement pour les messages sortants O'Chat -->
             <t t-if="message.ochat_fastapi_message_id and message.ochat_delivery_status">
 
