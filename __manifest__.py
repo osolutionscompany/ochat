@@ -14,6 +14,7 @@
             'o_chat/static/src/core/public_web/discuss_app_model_patch.js',
             'o_chat/static/src/core/public_web/thread_model_patch.js',
             'o_chat/static/src/core/web/discuss_app_category_model_patch.js',
+            'o_chat/static/src/core/common/message_model_patch.js',
             'o_chat/static/src/core/common/thread_icon_patch.xml',
             'o_chat/static/src/core/web/discuss_sidebar_category_item_patch.xml',
             'o_chat/static/src/core/common/message_status.xml',

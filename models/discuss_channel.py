@@ -151,6 +151,7 @@ class DiscussChannel(models.Model):
                 'ochat_fastapi_message_id': fastapi_message_id,
                 'ochat_delivery_status': 'pending'
             })
+
             _logger.info(f"✅ O'Chat message {message.id} sent (FastAPI ID: {fastapi_message_id}) to {self.ochat_connection_id.name} with {len(attachments)} attachment(s)")
         else:
             _logger.info(f"✅ O'Chat message sent to {self.ochat_connection_id.name} with {len(attachments)} attachment(s)")

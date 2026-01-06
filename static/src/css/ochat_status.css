@@ -6,6 +6,10 @@
     font-size: 0.9em;
     margin-left: 8px;
     vertical-align: middle;
+    position: absolute;
+    z-index: 5000;
+    bottom: 0;
+    right: -5px;
 }
 
 .ochat_status_indicator i {
@@ -52,7 +56,6 @@
 /* Effet hover sur les icônes */
 .ochat_status_indicator i:hover {
     opacity: 0.7;
-    cursor: help;
 }
 
 /* Style spécifique pour le double check (delivered/read) */
