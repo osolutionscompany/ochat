@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Extension du modèle mail.message pour supporter les statuts de livraison O'Chat
+Extension of mail.message model to support O'Chat delivery status tracking
 """
 from odoo import models, fields, api
 import logging
@@ -12,59 +12,59 @@ _logger = logging.getLogger(__name__)
 class MailMessage(models.Model):
     _inherit = 'mail.message'
 
-    # Champs pour le suivi de livraison O'Chat
+    # O'Chat delivery tracking fields
     ochat_fastapi_message_id = fields.Integer(
         string="FastAPI Message ID",
-        help="ID du message dans le serveur FastAPI central",
+        help="Message ID in the central FastAPI server",
         index=True,
-        readonly=True  # Marquer comme readonly pour qu'ils soient toujours lus
+        readonly=True
     )
 
     ochat_delivery_status = fields.Selection([
-        ('pending', 'En attente'),
-        ('sent', 'Envoyé'),
-        ('delivered', 'Délivré'),
-        ('read', 'Lu'),
-        ('retrying', 'En réessai'),
-        ('failed', 'Échec')
-    ], string="Statut de livraison O'Chat", default=False, readonly=True)
+        ('pending', 'Pending'),
+        ('sent', 'Sent'),
+        ('delivered', 'Delivered'),
+        ('read', 'Read'),
+        ('retrying', 'Retrying'),
+        ('failed', 'Failed')
+    ], string="O'Chat Delivery Status", default=False, readonly=True)
 
     ochat_retry_count = fields.Integer(
-        string="Nombre de tentatives",
+        string="Retry Count",
         default=0,
-        help="Nombre de tentatives de livraison effectuées",
+        help="Number of delivery attempts made",
         readonly=True
     )
 
     ochat_failed_reason = fields.Char(
-        string="Raison de l'échec",
-        help="Message d'erreur si le message a échoué",
+        string="Failure Reason",
+        help="Error message if the message failed",
         readonly=True
     )
 
     ochat_delivered_at = fields.Datetime(
-        string="Délivré le",
-        help="Date et heure de livraison du message",
+        string="Delivered At",
+        help="Date and time when the message was delivered",
         readonly=True
     )
 
     ochat_read_at = fields.Datetime(
-        string="Lu le",
-        help="Date et heure de lecture du message par le destinataire",
+        string="Read At",
+        help="Date and time when the message was read by the recipient",
         readonly=True
     )
 
     def _to_store(self, store, /, **kwargs):
         """
-        Surcharge de _to_store pour ajouter les champs O'Chat au store
+        Override _to_store to add O'Chat fields to the store
         """
-        # Ajouter les champs O'Chat à la liste des champs à récupérer
+        # Add O'Chat fields to the fields list to retrieve
         fields = kwargs.get('fields')
         if fields is None:
-            # Utiliser les champs par défaut du parent
+            # Use parent's default fields
             super()._to_store(store, **kwargs)
         else:
-            # Ajouter nos champs personnalisés à la liste
+            # Add our custom fields to the list
             ochat_fields = [
                 'ochat_fastapi_message_id',
                 'ochat_delivery_status',
@@ -73,12 +73,12 @@ class MailMessage(models.Model):
                 'ochat_delivered_at',
                 'ochat_read_at',
             ]
-            # Créer une nouvelle liste avec tous les champs
+            # Create a new list with all fields
             all_fields = list(fields) + ochat_fields
             kwargs['fields'] = all_fields
             super()._to_store(store, **kwargs)
 
-        # Ajouter les champs O'Chat au store pour chaque message
+        # Add O'Chat fields to the store for each message
         for message in self:
             data = {
                 'ochat_fastapi_message_id': message.ochat_fastapi_message_id,
@@ -92,7 +92,7 @@ class MailMessage(models.Model):
 
     def get_ochat_status_icon(self):
         """
-        Retourne l'icône et la couleur à afficher selon le statut
+        Returns the icon and color to display based on the status
         """
         self.ensure_one()
 
@@ -100,30 +100,35 @@ class MailMessage(models.Model):
             return False
 
         status_map = {
-            'pending': {'icon': 'fa-clock-o', 'color': 'text-muted', 'title': 'En attente'},
-            'sent': {'icon': 'fa-check', 'color': 'text-muted', 'title': 'Envoyé'},
-            'delivered': {'icon': 'fa-check-double', 'color': 'text-primary', 'title': 'Délivré'},
-            'read': {'icon': 'fa-check-double', 'color': 'text-info', 'title': 'Lu'},
-            'retrying': {'icon': 'fa-refresh', 'color': 'text-warning', 'title': f'En réessai (tentative {self.ochat_retry_count})'},
-            'failed': {'icon': 'fa-times-circle', 'color': 'text-danger', 'title': 'Échec'}
+            'pending': {'icon': 'fa-clock-o', 'color': 'text-muted', 'title': 'Pending'},
+            'sent': {'icon': 'fa-check', 'color': 'text-muted', 'title': 'Sent'},
+            'delivered': {'icon': 'fa-check-double', 'color': 'text-primary', 'title': 'Delivered'},
+            'read': {'icon': 'fa-check-double', 'color': 'text-info', 'title': 'Read'},
+            'retrying': {'icon': 'fa-refresh', 'color': 'text-warning', 'title': f'Retrying (attempt {self.ochat_retry_count})'},
+            'failed': {'icon': 'fa-times-circle', 'color': 'text-danger', 'title': 'Failed'}
         }
 
         return status_map.get(self.ochat_delivery_status, False)
 
     def _parse_iso_datetime(self, iso_datetime_str):
         """
-        Parse une date ISO 8601 en datetime Python
-        Gère les formats avec ou sans microsecondes
+        Parse an ISO 8601 date string to a naive Python datetime
+        Odoo always expects naive datetimes in UTC
         """
         if not iso_datetime_str:
             return None
 
         try:
-            # Essayer avec microsecondes
-            if '.' in iso_datetime_str:
-                return datetime.fromisoformat(iso_datetime_str.replace('Z', '+00:00'))
-            else:
-                return datetime.fromisoformat(iso_datetime_str.replace('Z', '+00:00'))
+            # Parse the datetime with timezone
+            dt = datetime.fromisoformat(iso_datetime_str.replace('Z', '+00:00'))
+
+            # Convert to UTC if needed and remove timezone (make naive)
+            if dt.tzinfo is not None:
+                from datetime import timezone
+                dt_utc = dt.astimezone(timezone.utc)
+                return dt_utc.replace(tzinfo=None)
+
+            return dt
         except Exception as e:
             _logger.warning(f"Failed to parse datetime '{iso_datetime_str}': {e}")
             return None
@@ -131,12 +136,12 @@ class MailMessage(models.Model):
     @api.model
     def update_ochat_status(self, fastapi_message_id, status, metadata=None):
         """
-        Met à jour le statut de livraison d'un message O'Chat
+        Update the delivery status of an O'Chat message
 
         Args:
-            fastapi_message_id: ID du message FastAPI
-            status: Nouveau statut
-            metadata: Métadonnées additionnelles (retry_count, error, etc.)
+            fastapi_message_id: FastAPI message ID
+            status: New status
+            metadata: Additional metadata (retry_count, error, etc.)
         """
         if metadata is None:
             metadata = {}
@@ -146,12 +151,12 @@ class MailMessage(models.Model):
         ], limit=1)
 
         if not message:
-            _logger.warning(f"Message FastAPI {fastapi_message_id} not found in Odoo")
+            _logger.warning(f"FastAPI message {fastapi_message_id} not found in Odoo")
             return False
 
         vals = {'ochat_delivery_status': status}
 
-        # Mettre à jour les champs selon le statut
+        # Update fields based on status
         if status == 'retrying':
             vals['ochat_retry_count'] = metadata.get('retry_count', 0)
 
@@ -174,25 +179,22 @@ class MailMessage(models.Model):
 
         message.write(vals)
 
-        # Déclencher une notification pour mettre à jour l'interface
-        # Récupérer le canal associé au message
+        # Trigger real-time interface update via bus notification
         if message.model == 'discuss.channel' and message.res_id:
             channel = self.env['discuss.channel'].browse(message.res_id)
             if channel.exists():
-                # Notifier via le bus les membres du canal
                 try:
-                    message_data = message.message_format()[0]
-                    notifications = []
+                    from odoo.addons.mail.models.discuss.mail_guest import Store
+
+                    store = Store()
+                    message._to_store(store, for_current_user=False)
+
+                    # Send notification to each channel member
                     for member in channel.channel_member_ids:
-                        notifications.append((
-                            member.partner_id,
-                            'mail.record/insert',
-                            {'Message': [message_data]},
-                        ))
-                    self.env['bus.bus']._sendmany(notifications)
+                        if member.partner_id:
+                            member.partner_id._bus_send_store(store)
+
                 except Exception as e:
                     _logger.warning(f"Could not send bus notification: {e}")
-
-        _logger.info(f"✅ Updated message {message.id} status to '{status}'")
 
         return True

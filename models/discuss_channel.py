@@ -141,20 +141,31 @@ class DiscussChannel(models.Model):
                   text=response.text)
             )
 
-        # Récupérer l'ID du message FastAPI depuis la réponse
+        # Get the FastAPI message ID from response
         response_data = response.json()
         fastapi_message_id = response_data.get('id')
 
         if fastapi_message_id and message:
-            # Stocker l'ID FastAPI dans le message Odoo pour le suivi
+            # Store FastAPI ID in Odoo message for tracking
             message.write({
                 'ochat_fastapi_message_id': fastapi_message_id,
                 'ochat_delivery_status': 'pending'
             })
 
-            _logger.info(f"✅ O'Chat message {message.id} sent (FastAPI ID: {fastapi_message_id}) to {self.ochat_connection_id.name} with {len(attachments)} attachment(s)")
-        else:
-            _logger.info(f"✅ O'Chat message sent to {self.ochat_connection_id.name} with {len(attachments)} attachment(s)")
+            # Send bus notification to update interface in real-time
+            try:
+                from odoo.addons.mail.models.discuss.mail_guest import Store
+
+                store = Store()
+                message._to_store(store, for_current_user=False)
+
+                # Notify all channel members
+                for member in self.channel_member_ids:
+                    if member.partner_id:
+                        member.partner_id._bus_send_store(store)
+
+            except Exception as e:
+                _logger.warning(f"Could not send initial status notification: {e}")
 
     def _notify_ochat_incoming_message(self):
         """
