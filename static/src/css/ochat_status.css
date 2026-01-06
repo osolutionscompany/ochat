@@ -1,0 +1,61 @@
+/* Styles pour les indicateurs de statut de livraison O'Chat */
+
+.ochat_status_indicator {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.9em;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+.ochat_status_indicator i {
+    transition: color 0.3s ease;
+}
+
+/* Animation pour l'icône de retry */
+.ochat_status_indicator .fa-refresh.fa-spin {
+    animation: fa-spin 2s infinite linear;
+}
+
+/* Couleurs spécifiques */
+.ochat_status_indicator .text-muted {
+    color: #6c757d !important;
+}
+
+.ochat_status_indicator .text-primary {
+    color: #0d6efd !important;
+}
+
+.ochat_status_indicator .text-info {
+    color: #0dcaf0 !important;
+}
+
+.ochat_status_indicator .text-warning {
+    color: #ffc107 !important;
+}
+
+.ochat_status_indicator .text-danger {
+    color: #dc3545 !important;
+}
+
+/* Espacement entre les icônes */
+.ochat_status_indicator i + i {
+    margin-left: 4px;
+}
+
+/* Style pour le texte des retry */
+.ochat_status_indicator small {
+    font-size: 0.75em;
+    opacity: 0.8;
+}
+
+/* Effet hover sur les icônes */
+.ochat_status_indicator i:hover {
+    opacity: 0.7;
+    cursor: help;
+}
+
+/* Style spécifique pour le double check (delivered/read) */
+.fa-check-double {
+    letter-spacing: -2px;
+}

@@ -229,15 +229,23 @@ class OchatWebhook(http.Controller):
             # Créer un environnement Odoo avec l'utilisateur admin
             env = request.env(user=1)
 
-            # Chercher le message mail correspondant dans Odoo
-            # Le message_id de FastAPI est stocké dans le corps du message ou comme référence
-            # Pour l'instant, on log juste la notification
-            # TODO: Stocker le message_id FastAPI quelque part pour pouvoir retrouver le message Odoo
-
-            _logger.info(
-                f"📬 Status update received: Message {message_id} → {status} "
-                f"(metadata: {metadata})"
+            # Mettre à jour le statut du message Odoo correspondant
+            mail_message_model = env['mail.message']
+            updated = mail_message_model.update_ochat_status(
+                fastapi_message_id=message_id,
+                status=status,
+                metadata=metadata
             )
+
+            if updated:
+                _logger.info(
+                    f"📬 Status update received and applied: Message {message_id} → {status} "
+                    f"(metadata: {metadata})"
+                )
+            else:
+                _logger.warning(
+                    f"⚠️  Status update received but message {message_id} not found in Odoo"
+                )
 
             # Afficher des logs différents selon le statut
             if status == 'delivered':

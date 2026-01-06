@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- Patch pour afficher l'icône de statut sur les messages O'Chat -->
+    <t t-name="mail.Message" t-inherit="mail.Message" t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('o-mail-Message-core')]" position="inside">
+            <!-- Afficher le statut uniquement pour les messages sortants O'Chat -->
+            <t t-if="message.ochat_fastapi_message_id and message.ochat_delivery_status">
+                <span class="ochat_status_indicator ms-2">
+                    <!-- Status: Pending -->
+                    <t t-if="message.ochat_delivery_status == 'pending'">
+                        <i class="fa fa-clock-o text-muted"
+                           title="En attente d'envoi"/>
+                    </t>
+
+                    <!-- Status: Sent -->
+                    <t t-elif="message.ochat_delivery_status == 'sent'">
+                        <i class="fa fa-check text-muted"
+                           title="Envoyé"/>
+                    </t>
+
+                    <!-- Status: Delivered -->
+                    <t t-elif="message.ochat_delivery_status == 'delivered'">
+                        <i class="fa fa-check-double text-primary"
+                           title="Délivré"/>
+                        <t t-if="message.ochat_retry_count > 0">
+                            <small class="text-muted ms-1">
+                                (<t t-esc="message.ochat_retry_count"/> retries)
+                            </small>
+                        </t>
+                    </t>
+
+                    <!-- Status: Read -->
+                    <t t-elif="message.ochat_delivery_status == 'read'">
+                        <i class="fa fa-check-double text-info"
+                           title="Lu"/>
+                        <i class="fa fa-eye text-info ms-1"
+                           title="Message lu"/>
+                    </t>
+
+                    <!-- Status: Retrying -->
+                    <t t-elif="message.ochat_delivery_status == 'retrying'">
+                        <i class="fa fa-refresh fa-spin text-warning"
+                           t-attf-title="En réessai (tentative {{message.ochat_retry_count}})"/>
+                        <small class="text-warning ms-1">
+                            (retry <t t-esc="message.ochat_retry_count"/>)
+                        </small>
+                    </t>
+
+                    <!-- Status: Failed -->
+                    <t t-elif="message.ochat_delivery_status == 'failed'">
+                        <i class="fa fa-times-circle text-danger"
+                           t-attf-title="Échec après {{message.ochat_retry_count}} tentatives"/>
+                        <t t-if="message.ochat_failed_reason">
+                            <small class="text-danger ms-1" t-attf-title="{{message.ochat_failed_reason}}">
+                                ✗
+                            </small>
+                        </t>
+                    </t>
+                </span>
+            </t>
+        </xpath>
+    </t>
+
+</templates>
