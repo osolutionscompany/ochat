@@ -147,7 +147,7 @@ class OchatWebhook(http.Controller):
                 message_type='comment',
                 subtype_xmlid='mail.mt_comment',
                 author_id=author_id,  # Utiliser le partner de la connection comme auteur
-                attachment_ids=[(6, 0, attachment_ids)] if attachment_ids else [],  # Lier les attachments
+                attachment_ids=attachment_ids if attachment_ids else [],  # Odoo 18: passer directement la liste d'IDs
                 ochat_incoming=True,  # Flag pour éviter de renvoyer ce message
             )
 

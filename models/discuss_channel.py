@@ -85,13 +85,18 @@ class DiscussChannel(models.Model):
         attachments = []
         if message and message.attachment_ids:
             for attachment in message.attachment_ids:
-                # Encoder chaque pièce jointe en base64
+                # En Odoo, attachment.datas est déjà en base64 (string)
+                # Il faut juste s'assurer que c'est bien une string
+                datas_b64 = attachment.datas
+                if isinstance(datas_b64, bytes):
+                    datas_b64 = datas_b64.decode('utf-8')
+
                 attachments.append({
                     'name': attachment.name,
                     'mimetype': attachment.mimetype,
-                    'datas': attachment.datas.decode('utf-8') if isinstance(attachment.datas, bytes) else attachment.datas,
+                    'datas': datas_b64,
                 })
-                _logger.info(f"📎 Preparing attachment: {attachment.name} ({attachment.mimetype})")
+                _logger.info(f"📎 Preparing attachment: {attachment.name} ({attachment.mimetype}, size: {len(datas_b64)} chars)")
 
         # Récupérer la clé publique du destinataire
         try:
