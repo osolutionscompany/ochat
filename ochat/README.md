@@ -37,7 +37,7 @@ The module requires these Python packages (automatically installed from `require
 
 ```bash
 # Navigate to the module directory
-cd /path/to/addons/o_chat
+cd /path/to/addons/ochat
 
 # Install dependencies in Odoo's Python environment
 pip3 install -r requirements.txt
@@ -48,7 +48,7 @@ Add the dependencies to your `requirements.txt` at the repository root.
 
 ### 2. Install the Module
 
-1. Copy the `o_chat` folder to your Odoo addons directory
+1. Copy the `ochat` folder to your Odoo addons directory
 2. Restart Odoo server
 3. Update the apps list: Settings → Apps → Update Apps List
 4. Search for "O'Chat" and click Install
@@ -209,7 +209,7 @@ After 7 attempts, the message is marked as failed and the sender is notified.
 2. Check webhook secret matches in both systems
 3. Test webhook manually:
    ```bash
-   curl -X POST http://odoo:8069/o_chat/webhook \
+   curl -X POST http://odoo:8069/ochat/webhook \
      -H "Authorization: Bearer YOUR_SECRET" \
      -H "Content-Type: application/json" \
      -d '{"source_instance_uuid":"test","content":"test"}'
@@ -236,7 +236,7 @@ python -m pytest tests/integration/
 ### Code Structure
 
 ```
-o_chat/
+ochat/
 ├── __init__.py
 ├── __manifest__.py
 ├── requirements.txt

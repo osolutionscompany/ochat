@@ -69,7 +69,7 @@ class ResConfigSettings(models.TransientModel):
 
         # Récupérer l'URL de base d'Odoo
         base_url = ICP.get_param('web.base.url')
-        webhook_url = f"{base_url}/o_chat/webhook"
+        webhook_url = f"{base_url}/ochat/webhook"
 
         instance_uuid = ICP.get_param('ochat.instance_uuid')
         instance_name = self.ochat_instance_name

@@ -3,14 +3,14 @@ import json
 
 from odoo import http
 from odoo.http import request
-from odoo.addons.o_chat.models.crypto_helper import decrypt_message_hybrid
+from odoo.addons.ochat.models.crypto_helper import decrypt_message_hybrid
 
 _logger = logging.getLogger(__name__)
 
 
 class OchatWebhook(http.Controller):
 
-    @http.route('/o_chat/webhook', type='json', auth='none', methods=['POST'], csrf=False)
+    @http.route('/ochat/webhook', type='json', auth='none', methods=['POST'], csrf=False)
     def receive_message(self, **kwargs):
         """
         Endpoint webhook pour recevoir les messages du serveur central
@@ -169,7 +169,7 @@ class OchatWebhook(http.Controller):
                 'message': str(e)
             }
 
-    @http.route('/o_chat/webhook/status', type='json', auth='none', methods=['POST'], csrf=False)
+    @http.route('/ochat/webhook/status', type='json', auth='none', methods=['POST'], csrf=False)
     def receive_status_update(self, **kwargs):
         """
         Endpoint webhook pour recevoir les notifications de changement de statut
