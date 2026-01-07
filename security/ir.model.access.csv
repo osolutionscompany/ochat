@@ -1,2 +1,3 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_ochat_connection_user,ochat.connection.user,model_ochat_connection,base.group_user,1,1,1,1
+access_ochat_create_ticket_wizard_user,ochat.create.ticket.wizard.user,model_ochat_create_ticket_wizard,base.group_user,1,1,1,1

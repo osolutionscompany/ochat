@@ -3,6 +3,8 @@ import base64
 import requests
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError, UserError
+from odoo.tools import html_escape
+from markupsafe import Markup
 from .crypto_helper import encrypt_message_hybrid
 
 _logger = logging.getLogger(__name__)
@@ -193,3 +195,80 @@ class DiscussChannel(models.Model):
         self._broadcast(self.channel_member_ids.partner_id.ids)
 
         _logger.info(f"✅ Broadcast notification sent to {len(self.channel_member_ids)} member(s) of channel {self.name}")
+
+    def execute_command_help(self, **kwargs):
+        """Override /help command to add O'Chat specific commands"""
+        self.ensure_one()
+        if self.channel_type == 'ochat':
+            # Custom help for O'Chat channels
+            msg = Markup(_(
+                "<b>Available commands for O'Chat:</b><br/>"
+                "• <b>/help</b>: Show this help message<br/>"
+                "• <b>/leave</b>: Leave this conversation<br/>"
+                "• <b>/status</b>: Show connection status and encryption info<br/>"
+                "• <b>/ticket</b>: Create a helpdesk ticket from this conversation<br/>"
+                "• <b>/who</b>: List members in this conversation"
+            ))
+            self.env.user._bus_send_transient_message(self, msg)
+        else:
+            # Default help for other channels
+            return super().execute_command_help(**kwargs)
+
+    def execute_command_status(self, **kwargs):
+        """Custom O'Chat command: /status - Shows connection info"""
+        self.ensure_one()
+
+        if self.channel_type != 'ochat':
+            return
+
+        if not self.ochat_connection_id:
+            msg = Markup(_("⚠️ This channel has no O'Chat connection"))
+        else:
+            connection = self.ochat_connection_id
+            ICP = self.env['ir.config_parameter'].sudo()
+
+            # Encryption status
+            encryption_status = "🔒 Enabled"
+
+            # Connection status based on status field
+            status_display = {
+                'active': '🟢 Active',
+                'pending': '🟡 Pending',
+                'blocked': '🔴 Blocked',
+            }.get(connection.status, '⚪ Unknown')
+
+            msg = Markup(_(
+                "<b>O'Chat Connection Status</b><br/>"
+                "• <b>Remote Instance:</b> %(instance_name)s<br/>"
+                "• <b>Instance ID:</b> %(instance_uuid)s<br/>"
+                "• <b>Status:</b> %(status)s<br/>"
+                "• <b>Encryption:</b> %(encryption)s"
+            )) % {
+                'instance_name': html_escape(connection.name or 'Unknown'),
+                'instance_uuid': html_escape(connection.remote_instance_uuid),
+                'status': status_display,
+                'encryption': encryption_status,
+            }
+
+        # Send as transient message (not saved)
+        self.env.user._bus_send_transient_message(self, msg)
+
+    def execute_command_ticket(self, **kwargs):
+        """Custom O'Chat command: /ticket - Create a helpdesk ticket from conversation"""
+        self.ensure_one()
+
+        if self.channel_type != 'ochat':
+            return
+
+        # Return action to open the create ticket wizard
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Create Ticket from O\'Chat'),
+            'res_model': 'ochat.create.ticket.wizard',
+            'view_mode': 'form',
+            'views': [(False, 'form')],
+            'target': 'new',
+            'context': {
+                'default_channel_id': self.id,
+            },
+        }
