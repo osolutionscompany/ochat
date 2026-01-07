@@ -7,36 +7,62 @@
         <field name="inherit_id" ref="base.res_config_settings_view_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form" position="inside">
-                <app data-string="O'Chat" id="ochat" string="O'Chat" name="ochat">
-                    <block title="Instance Configuration" id="instance_configuration">
-                        <setting id="ochat_instance_name_settings" string="Instance Name" help="Give a friendly name to this Odoo instance for identification in O'Chat network">
-                            <field name="ochat_instance_name" placeholder="e.g., Partner O'Solutions" class="o_light_label mt8"/>
+                <app data-string="O'Chat" id="ochat" string="O'Chat"
+                     name="ochat">
+                    <block title="Instance Configuration"
+                           id="instance_configuration">
+                        <setting id="ochat_instance_name_settings"
+                                 string="Instance Name"
+                                 help="Give a friendly name to this Odoo instance for identification in O'Chat network">
+                            <field name="ochat_instance_name"
+                                   placeholder="e.g., Partner O'Solutions"
+                                   class="o_light_label mt8"/>
                         </setting>
-                        <setting id="ochat_instance_uuid_settings" string="Instance UUID" help="Unique identifier for this instance (automatically generated)">
-                            <field name="ochat_instance_uuid" readonly="1" class="o_light_label mt8"/>
+                        <setting id="ochat_instance_uuid_settings"
+                                 string="Instance UUID"
+                                 help="Unique identifier for this instance (automatically generated)">
+                            <field name="ochat_instance_uuid" readonly="1"
+                                   class="o_light_label mt8"/>
                         </setting>
                     </block>
                     <block title="Central Server" id="central_server">
-                        <setting id="ochat_central_server_url_settings" string="Central Server URL" help="URL of the central O'Chat server that coordinates communication between instances">
-                            <field name="ochat_central_server_url" placeholder="http://localhost:8000" class="o_light_label mt8"/>
+                        <setting id="ochat_central_server_url_settings"
+                                 string="Central Server URL"
+                                 help="URL of the central O'Chat server that coordinates communication between instances">
+                            <field name="ochat_central_server_url"
+                                   placeholder="http://localhost:8000"
+                                   class="o_light_label mt8"/>
                         </setting>
-                        <setting id="ochat_registration_settings" string="Registration Status" help="Register this instance with the central server to enable communication with other instances">
-                            <div invisible="ochat_is_registered" class="alert alert-warning" role="alert">
-                                This instance is not registered yet. Please configure the instance name and central server URL, then click the button below to register.
+                        <setting id="ochat_registration_settings"
+                                 string="Registration Status"
+                                 help="Register this instance with the central server to enable communication with other instances">
+                            <div invisible="ochat_is_registered"
+                                 class="alert alert-warning" role="alert">
+                                This instance is not registered yet. Please
+                                configure the instance name and central server
+                                URL, then click the button below to register.
                             </div>
-                            <div invisible="not ochat_is_registered" class="alert alert-success" role="alert">
-                                <i class="fa fa-check-circle"/> Instance successfully registered with the central server!
+                            <div invisible="not ochat_is_registered"
+                                 class="alert alert-success" role="alert">
+                                <i class="fa fa-check-circle"/>
+                                Instance successfully registered with the
+                                central server!
                             </div>
                             <div invisible="ochat_is_registered">
                                 <button string="Register with Central Server"
+                                        noSaveDialog="true"
                                         type="object"
                                         name="action_ochat_register"
                                         class="btn-primary"/>
                             </div>
                             <div invisible="not ochat_is_registered">
-                                <span class="text-muted">To re-register or update registration, click the button below:</span>
+                                <span class="text-muted">To re-register or
+                                    update registration, click the button
+                                    below:
+                                </span>
                                 <button string="Update Registration"
                                         type="object"
+                                        noSaveDialog="true"
                                         name="action_ochat_register"
                                         class="btn-link ms-2"/>
                             </div>

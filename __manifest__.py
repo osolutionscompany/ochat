@@ -9,6 +9,7 @@
         'views/res_config_settings_views.xml',
         'views/ochat_views.xml',
         'views/create_ticket_wizard_views.xml',
+        'views/send_bulk_message_wizard_views.xml',
     ],
     'assets': {
         'web.assets_backend': [

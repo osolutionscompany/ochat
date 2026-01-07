@@ -62,6 +62,9 @@ class ResConfigSettings(models.TransientModel):
         """Enregistre cette instance auprès du serveur central"""
         self.ensure_one()
 
+        # Automatically save the configuration settings first
+        self.set_values()
+
         ICP = self.env['ir.config_parameter'].sudo()
 
         # Récupérer l'URL de base d'Odoo
@@ -124,13 +127,7 @@ class ResConfigSettings(models.TransientModel):
                 _logger.info(f"✅ Successfully registered instance {instance_name} with central server")
                 return {
                     'type': 'ir.actions.client',
-                    'tag': 'display_notification',
-                    'params': {
-                        'title': _('Success'),
-                        'message': _('Instance successfully registered with central server!'),
-                        'type': 'success',
-                        'sticky': False,
-                    }
+                    'tag': 'reload',
                 }
             else:
                 _logger.error(f"❌ Failed to register: {response.status_code} - {response.text}")

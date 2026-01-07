@@ -6,6 +6,8 @@ from odoo.exceptions import ValidationError, UserError
 from odoo.tools import html_escape
 from markupsafe import Markup
 from .crypto_helper import encrypt_message_hybrid
+from odoo.tools import html2plaintext
+
 
 _logger = logging.getLogger(__name__)
 
@@ -52,7 +54,7 @@ class DiscussChannel(models.Model):
             # Ensuite l'envoyer via O'Chat avec les attachments
             try:
                 self._send_ochat_message(
-                    content=kwargs.get('body', ''),
+                    content=html2plaintext(kwargs.get('body', '')),
                     message=message
                 )
             except Exception as e:
