@@ -6,11 +6,11 @@ from odoo.exceptions import UserError, ValidationError
 _logger = logging.getLogger(__name__)
 
 
-# TODO :
-# 1. Il faut que ca créé automatiquement le canal lors de la création de la connection comme ca on peut ajouter également les partners directement dessus
-# 2. Il faut que le message POP dans l'écran des partners lorsqu'on le recoit
-# 3. Il faut implémenter la partie réponse maintenant
-# 4. Je crois qu'on devrait faire un channel type O'Chat puor ne pas casser l'héritage et se baser de comment les messages sont reçu et envoyés dans le module whatsapp
+# TODO:
+# 1. The channel should be automatically created when creating the connection so we can also add partners directly to it
+# 2. The message should POP on the partners screen when received
+# 3. Need to implement the reply part now
+# 4. I think we should create a channel type O'Chat to not break the inheritance and base it on how messages are received and sent in the whatsapp module
 
 class OchatConnection(models.Model):
     _name = 'ochat.connection'
@@ -66,7 +66,7 @@ class OchatConnection(models.Model):
         connections = super().create(vals_list)
 
         for connection in connections:
-            # Créer automatiquement le canal O'Chat
+            # Automatically create the O'Chat channel
             if not connection.channel_id:
                 channel = self.env['discuss.channel'].create({
                     'name': f"{connection.name}",
@@ -77,7 +77,7 @@ class OchatConnection(models.Model):
                 connection.channel_id = channel.id
                 _logger.info(f"✅ Auto-created O'Chat channel for new connection {connection.name}")
 
-            # Synchroniser les partners (principal + additionnels)
+            # Synchronize partners (main + additional)
             connection._sync_channel_members()
 
         return connections
@@ -86,7 +86,7 @@ class OchatConnection(models.Model):
         """Override write to sync channel members when partners change"""
         res = super().write(vals)
 
-        # Re-sync si le partner principal ou les membres additionnels changent
+        # Re-sync if main partner or additional members change
         if 'partner_id' in vals or 'partner_ids' in vals:
             self._sync_channel_members()
 
@@ -98,14 +98,14 @@ class OchatConnection(models.Model):
             if not connection.channel_id:
                 continue
 
-            # Tous les partners à inclure : principal + additionnels
+            # All partners to include: main + additional
             all_partners = connection.partner_id | connection.partner_ids
 
-            # Récupérer les membres actuels du channel
+            # Get current channel members
             current_members = connection.channel_id.channel_member_ids
             current_partner_ids = current_members.mapped('partner_id')
 
-            # Partners à ajouter
+            # Partners to add
             partners_to_add = all_partners - current_partner_ids
             for partner in partners_to_add:
                 self.env['discuss.channel.member'].create({
@@ -114,7 +114,7 @@ class OchatConnection(models.Model):
                 })
                 _logger.info(f"✅ Added partner {partner.name} to channel {connection.channel_id.name}")
 
-            # Partners à retirer (sauf le partner principal qui doit toujours rester)
+            # Partners to remove (except main partner who must always stay)
             partners_to_remove = current_partner_ids - all_partners
             members_to_remove = current_members.filtered(
                 lambda m: m.partner_id in partners_to_remove
@@ -126,22 +126,22 @@ class OchatConnection(models.Model):
     @api.model
     def _find_or_create_channel(self, remote_instance_uuid):
         """
-        Trouve ou crée un canal de discussion pour une connexion O'Chat
-        Note: Cette méthode est maintenant obsolète car le canal est créé automatiquement
-        lors de la création de la connexion. Gardée pour compatibilité.
+        Find or create a discussion channel for an O'Chat connection
+        Note: This method is now deprecated because the channel is created automatically
+        when the connection is created. Kept for backward compatibility.
         """
-        # Chercher une connexion existante
+        # Search for existing connection
         connection = self.search([('remote_instance_uuid', '=', remote_instance_uuid)], limit=1)
 
         if not connection:
             _logger.warning(f"⚠️ No connection found for instance {remote_instance_uuid}")
             return None
 
-        # Le canal devrait déjà exister grâce à la méthode create()
+        # The channel should already exist thanks to the create() method
         if connection.channel_id:
             return connection.channel_id
 
-        # Fallback: créer le canal si inexistant (ne devrait pas arriver)
+        # Fallback: create channel if missing (should not happen)
         _logger.warning(f"⚠️ Channel missing for connection {connection.name}, creating it now")
         channel = self.env['discuss.channel'].create({
             'name': f"{connection.name}",
@@ -156,10 +156,10 @@ class OchatConnection(models.Model):
         return channel
 
     def action_send_test_message(self):
-        """Envoie un message de test à l'instance distante"""
+        """Send a test message to the remote instance"""
         self.ensure_one()
 
-        # Récupérer la configuration O'Chat depuis les paramètres système
+        # Retrieve O'Chat configuration from system parameters
         ICP = self.env['ir.config_parameter'].sudo()
 
         instance_uuid = ICP.get_param('ochat.instance_uuid')
@@ -177,21 +177,21 @@ class OchatConnection(models.Model):
         if not api_key:
             raise UserError(_("Missing API key. Please re-register this instance."))
 
-        # Préparer les données du message
+        # Prepare message data
         data = {
             'source_instance_uuid': instance_uuid,
             'target_instance_uuid': self.remote_instance_uuid,
             'content': f"🧪 Test message from {instance_name}!"
         }
 
-        # Préparer les headers avec authentification
+        # Prepare headers with authentication
         headers = {
             'Authorization': f'Bearer {api_key}',
             'Content-Type': 'application/json'
         }
 
         try:
-            # Envoyer le message via le serveur central
+            # Send message via central server
             response = requests.post(
                 f"{central_server_url}/api/v1/messages/send",
                 json=data,

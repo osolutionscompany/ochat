@@ -42,6 +42,7 @@
                                 configure the instance name and central server
                                 URL, then click the button below to register.
                             </div>
+                            <field name="ochat_is_registered" invisible="1"/>
                             <div invisible="not ochat_is_registered"
                                  class="alert alert-success" role="alert">
                                 <i class="fa fa-check-circle"/>

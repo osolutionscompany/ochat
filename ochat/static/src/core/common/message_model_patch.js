@@ -4,7 +4,7 @@ import { Message } from "@mail/core/common/message_model";
 import { patch } from "@web/core/utils/patch";
 
 /**
- * Patch du modèle Message pour ajouter les champs de statut O'Chat
+ * Patch of the Message model to add O'Chat status fields
  */
 patch(Message.prototype, {
     ochat_fastapi_message_id: undefined,

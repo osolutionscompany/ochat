@@ -4,9 +4,11 @@ import { Thread } from "@mail/core/common/thread_model";
 import { patch } from "@web/core/utils/patch";
 
 patch(Thread.prototype, {
-    _computeDiscussAppCategory() {
-        return this.channel_type === "ochat"
-            ? this.store.discuss.ochat
-            : super._computeDiscussAppCategory();
+    update(data) {
+        super.update(data);
+        // Add ochat threads to the ochat category
+        if (this.type === "ochat" && this._store.discuss?.ochat) {
+            this._store.discuss.ochat.threads.add(this);
+        }
     },
 });

@@ -42,16 +42,20 @@ class DiscussChannel(models.Model):
         """Override message_post to send O'Chat messages via central server"""
         self.ensure_one()
 
-        # Vérifier si c'est un message entrant (depuis le webhook)
-        # Ces messages ne doivent PAS être renvoyés au serveur central
+        # Check if this is an incoming message (from webhook)
+        # These messages should NOT be sent back to the central server
         ochat_incoming = kwargs.pop('ochat_incoming', False)
 
-        # Si c'est un canal O'Chat ET ce n'est pas un message entrant
+        # If this is an O'Chat channel AND not an incoming message
         if self.channel_type == 'ochat' and self.ochat_connection_id and not ochat_incoming:
-            # D'abord créer le message localement
+            # Create the message first
+            # We'll send our own notification after adding O'Chat fields
             message = super().message_post(**kwargs)
 
-            # Ensuite l'envoyer via O'Chat avec les attachments
+            # Commit to ensure the message exists in DB before sending
+            self.env.cr.commit()
+
+            # Then send it via O'Chat with attachments
             try:
                 self._send_ochat_message(
                     content=html2plaintext(kwargs.get('body', '')),
@@ -59,11 +63,11 @@ class DiscussChannel(models.Model):
                 )
             except Exception as e:
                 _logger.error(f"❌ Failed to send O'Chat message: {str(e)}")
-                # Le message reste visible localement même si l'envoi échoue
+                # Message remains visible locally even if sending fails
 
             return message
 
-        # Pour les autres types de canaux, comportement normal
+        # For other channel types, use normal behavior
         return super().message_post(**kwargs)
 
     def _send_ochat_message(self, content, message=None):
@@ -73,7 +77,7 @@ class DiscussChannel(models.Model):
         if not self.ochat_connection_id:
             raise UserError(_("No O'Chat connection linked to this channel"))
 
-        # Récupérer la configuration O'Chat
+        # Get O'Chat configuration
         ICP = self.env['ir.config_parameter'].sudo()
         instance_uuid = ICP.get_param('ochat.instance_uuid')
         central_server_url = ICP.get_param('ochat.central_server_url')
@@ -85,12 +89,12 @@ class DiscussChannel(models.Model):
         if not api_key:
             raise UserError(_("Missing API key. Please re-register this instance."))
 
-        # Préparer les pièces jointes si présentes
+        # Prepare attachments if present
         attachments = []
         if message and message.attachment_ids:
             for attachment in message.attachment_ids:
-                # En Odoo, attachment.datas est déjà en base64 (string)
-                # Il faut juste s'assurer que c'est bien une string
+                # In Odoo, attachment.datas is already base64 (string)
+                # Just make sure it's a string
                 datas_b64 = attachment.datas
                 if isinstance(datas_b64, bytes):
                     datas_b64 = datas_b64.decode('utf-8')
@@ -102,7 +106,7 @@ class DiscussChannel(models.Model):
                 })
                 _logger.info(f"📎 Preparing attachment: {attachment.name} ({attachment.mimetype}, size: {len(datas_b64)} chars)")
 
-        # Récupérer la clé publique du destinataire
+        # Get recipient's public key
         try:
             public_key_response = requests.get(
                 f"{central_server_url}/api/v1/instances/{self.ochat_connection_id.remote_instance_uuid}/public_key",
@@ -118,29 +122,29 @@ class DiscussChannel(models.Model):
         except requests.exceptions.RequestException as e:
             raise UserError(f"Failed to fetch recipient's public key: {str(e)}")
 
-        # Chiffrer le message et les attachments avec la clé publique du destinataire
+        # Encrypt message and attachments with recipient's public key
         _logger.info("🔒 Encrypting message before sending...")
         encrypted_data = encrypt_message_hybrid(content, attachments, recipient_public_key)
 
-        # Préparer les données du message (maintenant chiffrées)
+        # Prepare message data (now encrypted)
         data = {
             'source_instance_uuid': instance_uuid,
             'target_instance_uuid': self.ochat_connection_id.remote_instance_uuid,
-            'encrypted_data': encrypted_data  # Envoyer les données chiffrées
+            'encrypted_data': encrypted_data
         }
 
-        # Préparer les headers avec authentification
+        # Prepare headers with authentication
         headers = {
             'Authorization': f'Bearer {api_key}',
             'Content-Type': 'application/json'
         }
 
-        # Envoyer via le serveur central
+        # Send via central server
         response = requests.post(
             f"{central_server_url}/api/v1/messages/send",
             json=data,
             headers=headers,
-            timeout=30  # Augmenté à 30s pour les fichiers volumineux
+            timeout=30  # Increased to 30s for large files
         )
 
         if response.status_code != 200:
@@ -161,17 +165,27 @@ class DiscussChannel(models.Model):
                 'ochat_delivery_status': 'pending'
             })
 
+            # Force immediate commit to ensure data is in DB
+            self.env.cr.commit()
+
             # Send bus notification to update interface in real-time
             try:
-                from odoo.addons.mail.models.discuss.mail_guest import Store
+                # Get complete formatted message with all O'Chat fields
+                formatted_messages = message.message_format()
+                if formatted_messages:
+                    # Send complete message update to all channel members
+                    notifications = []
+                    for member in self.channel_member_ids:
+                        if member.partner_id:
+                            notifications.append([
+                                member.partner_id,
+                                'mail.record/insert',
+                                {'Message': [formatted_messages[0]]}
+                            ])
 
-                store = Store()
-                message._to_store(store, for_current_user=False)
-
-                # Notify all channel members
-                for member in self.channel_member_ids:
-                    if member.partner_id:
-                        member.partner_id._bus_send_store(store)
+                    if notifications:
+                        self.env['bus.bus']._sendmany(notifications)
+                        _logger.info(f"✅ Sent initial O'Chat status notification for message {message.id}")
 
             except Exception as e:
                 _logger.warning(f"Could not send initial status notification: {e}")
@@ -189,7 +203,7 @@ class DiscussChannel(models.Model):
         # Re-pin the channel for all members and mark as unread
         for member in self.channel_member_ids:
             member.write({
-                'unpin_dt': False,  # Re-pin if unpinned
+                'is_pinned': True,  # Re-pin if unpinned
                 'last_interest_dt': fields.Datetime.now(),  # Update interest timestamp
             })
 

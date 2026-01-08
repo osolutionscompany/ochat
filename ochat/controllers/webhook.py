@@ -13,10 +13,10 @@ class OchatWebhook(http.Controller):
     @http.route('/ochat/webhook', type='json', auth='none', methods=['POST'], csrf=False)
     def receive_message(self, **kwargs):
         """
-        Endpoint webhook pour recevoir les messages du serveur central
+        Webhook endpoint to receive messages from the central server
         """
         try:
-            # Vérifier l'authentification
+            # Check authentication
             authorization = request.httprequest.headers.get('Authorization')
             if not authorization:
                 _logger.error("❌ Missing Authorization header in webhook call")
@@ -25,7 +25,7 @@ class OchatWebhook(http.Controller):
                     'message': 'Missing Authorization header'
                 }
 
-            # Récupérer le webhook secret stocké
+            # Retrieve stored webhook secret
             ICP = request.env['ir.config_parameter'].sudo()
             expected_secret = ICP.get_param('ochat.webhook_secret')
 
@@ -36,7 +36,7 @@ class OchatWebhook(http.Controller):
                     'message': 'Webhook not configured'
                 }
 
-            # Vérifier le token
+            # Check token
             if not authorization.startswith('Bearer '):
                 _logger.error("❌ Invalid Authorization header format")
                 return {
@@ -52,22 +52,22 @@ class OchatWebhook(http.Controller):
                     'message': 'Invalid webhook secret'
                 }
 
-            # Authentification réussie, traiter le message
+            # Authentication successful, process message
             data = json.loads(request.httprequest.data)
             _logger.info(f"📨 Received authenticated message from central server")
 
-            # Récupérer les informations du message
+            # Get message information
             source_uuid = data.get('source_instance_uuid')
             message_id = data.get('message_id')
 
-            # Vérifier si le message est chiffré
+            # Check if message is encrypted
             encrypted_data = data.get('encrypted_data')
 
             if encrypted_data:
-                # Message chiffré - déchiffrer avec notre clé privée
+                # Encrypted message - decrypt with our private key
                 _logger.info(f"🔒 Encrypted message detected, decrypting...")
 
-                # Récupérer notre clé privée
+                # Get our private key
                 ICP = request.env['ir.config_parameter'].sudo()
                 private_key_pem = ICP.get_param('ochat.private_key')
 
@@ -79,7 +79,7 @@ class OchatWebhook(http.Controller):
                     }
 
                 try:
-                    # Déchiffrer le message
+                    # Decrypt message
                     decrypted = decrypt_message_hybrid(encrypted_data, private_key_pem)
                     content = decrypted.get('content', '')
                     attachments_data = decrypted.get('attachments', [])
@@ -91,7 +91,7 @@ class OchatWebhook(http.Controller):
                         'message': f'Decryption failed: {str(e)}'
                     }
             else:
-                # Message en clair (rétrocompatibilité)
+                # Plain text message (backward compatibility)
                 content = data.get('content')
                 attachments_data = data.get('attachments', [])
 
@@ -102,10 +102,10 @@ class OchatWebhook(http.Controller):
                     'message': 'Missing required field: source_uuid'
                 }
 
-            # Créer un environnement Odoo avec l'utilisateur admin
-            env = request.env(user=1)  # user=1 est généralement l'admin
+            # Create Odoo environment with admin user
+            env = request.env(user=1)  # user=1 is usually admin
 
-            # Trouver ou créer le canal de discussion
+            # Find or create discussion channel
             connection_model = env['ochat.connection']
             channel = connection_model._find_or_create_channel(source_uuid)
 
@@ -116,14 +116,14 @@ class OchatWebhook(http.Controller):
                     'message': 'Could not find connection'
                 }
 
-            # Récupérer le partner de la connection pour l'utiliser comme auteur
+            # Get connection partner to use as author
             connection = env['ochat.connection'].search([
                 ('remote_instance_uuid', '=', source_uuid)
             ], limit=1)
 
             author_id = connection.partner_id.id if connection and connection.partner_id else None
 
-            # Créer les pièces jointes si présentes
+            # Create attachments if present
             attachment_ids = []
             if attachments_data:
                 for att_data in attachments_data:
@@ -140,18 +140,18 @@ class OchatWebhook(http.Controller):
                     except Exception as e:
                         _logger.error(f"❌ Failed to create attachment: {str(e)}")
 
-            # Poster le message dans le channel
-            # IMPORTANT: ochat_incoming=True pour éviter la boucle infinie
+            # Post message to channel
+            # IMPORTANT: ochat_incoming=True to avoid infinite loop
             message = channel.message_post(
-                body=content or '',  # Permettre messages vides avec attachments
+                body=content or '',  # Allow empty messages with attachments
                 message_type='comment',
                 subtype_xmlid='mail.mt_comment',
-                author_id=author_id,  # Utiliser le partner de la connection comme auteur
-                attachment_ids=attachment_ids if attachment_ids else [],  # Odoo 18: passer directement la liste d'IDs
-                ochat_incoming=True,  # Flag pour éviter de renvoyer ce message
+                author_id=author_id,  # Use connection partner as author
+                attachment_ids=attachment_ids if attachment_ids else [],  # Odoo 18: pass list of IDs directly
+                ochat_incoming=True,  # Flag to avoid resending message
             )
 
-            # Notifier tous les membres pour faire "pop" le message
+            # Notify all members to "pop" the message
             channel._notify_ochat_incoming_message()
 
             _logger.info(f"✅ Message posted to channel '{channel.name}'")
@@ -172,11 +172,11 @@ class OchatWebhook(http.Controller):
     @http.route('/ochat/webhook/status', type='json', auth='none', methods=['POST'], csrf=False)
     def receive_status_update(self, **kwargs):
         """
-        Endpoint webhook pour recevoir les notifications de changement de statut
-        Appelé par FastAPI quand le statut d'un message change
+        Webhook endpoint to receive status change notifications
+        Called by FastAPI when message status changes
         """
         try:
-            # Vérifier l'authentification
+            # Check authentication
             authorization = request.httprequest.headers.get('Authorization')
             if not authorization:
                 _logger.error("❌ Missing Authorization header in status webhook")
@@ -185,7 +185,7 @@ class OchatWebhook(http.Controller):
                     'message': 'Missing Authorization header'
                 }
 
-            # Récupérer le webhook secret
+            # Get webhook secret
             ICP = request.env['ir.config_parameter'].sudo()
             expected_secret = ICP.get_param('ochat.webhook_secret')
 
@@ -196,7 +196,7 @@ class OchatWebhook(http.Controller):
                     'message': 'Webhook not configured'
                 }
 
-            # Vérifier le token
+            # Check token
             provided_secret = authorization.replace('Bearer ', '')
             if provided_secret != expected_secret:
                 _logger.error("❌ Invalid webhook secret in status update")
@@ -205,7 +205,7 @@ class OchatWebhook(http.Controller):
                     'message': 'Unauthorized'
                 }
 
-            # Récupérer les données de la requête
+            # Get request data
             data = request.get_json_data()
             if not data:
                 _logger.error("❌ No data in status update request")
@@ -226,10 +226,10 @@ class OchatWebhook(http.Controller):
                     'message': 'Missing required fields'
                 }
 
-            # Créer un environnement Odoo avec l'utilisateur admin
+            # Create Odoo environment with admin user
             env = request.env(user=1)
 
-            # Mettre à jour le statut du message Odoo correspondant
+            # Update status of corresponding Odoo message
             mail_message_model = env['mail.message']
             updated = mail_message_model.update_ochat_status(
                 fastapi_message_id=message_id,
@@ -247,7 +247,7 @@ class OchatWebhook(http.Controller):
                     f"⚠️  Status update received but message {message_id} not found in Odoo"
                 )
 
-            # Afficher des logs différents selon le statut
+            # Display different logs depending on status
             if status == 'delivered':
                 retry_count = metadata.get('retry_count', 0)
                 if retry_count > 0:
@@ -266,8 +266,8 @@ class OchatWebhook(http.Controller):
                     f"❌ Message {message_id} failed definitively after {retry_count} attempts: {error}"
                 )
 
-            # TODO: Mettre à jour l'interface Odoo pour afficher le statut
-            # Par exemple, ajouter une icône de statut sur le message dans Discuss
+            # TODO: Update Odoo interface to display status
+            # For example, add status icon to message in Discuss
 
             return {
                 'status': 'received',

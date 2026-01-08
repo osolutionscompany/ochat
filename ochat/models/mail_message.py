@@ -54,41 +54,24 @@ class MailMessage(models.Model):
         readonly=True
     )
 
-    def _to_store(self, store, /, **kwargs):
+    def _message_format_extras(self, format_reply):
         """
-        Override _to_store to add O'Chat fields to the store
+        Override _message_format_extras to add O'Chat fields to message format
+        This method is called by _message_format to add custom fields to messages
         """
-        # Add O'Chat fields to the fields list to retrieve
-        fields = kwargs.get('fields')
-        if fields is None:
-            # Use parent's default fields
-            super()._to_store(store, **kwargs)
-        else:
-            # Add our custom fields to the list
-            ochat_fields = [
-                'ochat_fastapi_message_id',
-                'ochat_delivery_status',
-                'ochat_retry_count',
-                'ochat_failed_reason',
-                'ochat_delivered_at',
-                'ochat_read_at',
-            ]
-            # Create a new list with all fields
-            all_fields = list(fields) + ochat_fields
-            kwargs['fields'] = all_fields
-            super()._to_store(store, **kwargs)
+        vals = super()._message_format_extras(format_reply)
 
-        # Add O'Chat fields to the store for each message
-        for message in self:
-            data = {
-                'ochat_fastapi_message_id': message.ochat_fastapi_message_id,
-                'ochat_delivery_status': message.ochat_delivery_status,
-                'ochat_retry_count': message.ochat_retry_count,
-                'ochat_failed_reason': message.ochat_failed_reason,
-                'ochat_delivered_at': message.ochat_delivered_at.isoformat() if message.ochat_delivered_at else False,
-                'ochat_read_at': message.ochat_read_at.isoformat() if message.ochat_read_at else False,
-            }
-            store.add(message, data)
+        # Add O'Chat fields to the message data
+        vals.update({
+            'ochat_fastapi_message_id': self.ochat_fastapi_message_id,
+            'ochat_delivery_status': self.ochat_delivery_status,
+            'ochat_retry_count': self.ochat_retry_count,
+            'ochat_failed_reason': self.ochat_failed_reason,
+            'ochat_delivered_at': self.ochat_delivered_at.isoformat() if self.ochat_delivered_at else False,
+            'ochat_read_at': self.ochat_read_at.isoformat() if self.ochat_read_at else False,
+        })
+
+        return vals
 
     def get_ochat_status_icon(self):
         """
@@ -179,20 +162,30 @@ class MailMessage(models.Model):
 
         message.write(vals)
 
+        # Force commit to ensure data is in DB
+        self.env.cr.commit()
+
         # Trigger real-time interface update via bus notification
         if message.model == 'discuss.channel' and message.res_id:
             channel = self.env['discuss.channel'].browse(message.res_id)
             if channel.exists():
                 try:
-                    from odoo.addons.mail.models.discuss.mail_guest import Store
+                    # Get complete formatted message with updated O'Chat fields
+                    formatted_messages = message.message_format()
+                    if formatted_messages:
+                        # Send complete message update to all channel members
+                        notifications = []
+                        for member in channel.channel_member_ids:
+                            if member.partner_id:
+                                notifications.append([
+                                    member.partner_id,
+                                    'mail.record/insert',
+                                    {'Message': [formatted_messages[0]]}
+                                ])
 
-                    store = Store()
-                    message._to_store(store, for_current_user=False)
-
-                    # Send notification to each channel member
-                    for member in channel.channel_member_ids:
-                        if member.partner_id:
-                            member.partner_id._bus_send_store(store)
+                        if notifications:
+                            self.env['bus.bus']._sendmany(notifications)
+                            _logger.info(f"✅ Sent status update notification for message {message.id}: {status}")
 
                 except Exception as e:
                     _logger.warning(f"Could not send bus notification: {e}")

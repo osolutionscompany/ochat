@@ -37,7 +37,7 @@ class ResConfigSettings(models.TransientModel):
         res = super(ResConfigSettings, self).get_values()
         ICP = self.env['ir.config_parameter'].sudo()
 
-        # Générer un UUID si non existant
+        # Generate a UUID if it doesn't exist
         instance_uuid = ICP.get_param('ochat.instance_uuid')
         if not instance_uuid:
             instance_uuid = str(uuid.uuid4())
@@ -59,7 +59,7 @@ class ResConfigSettings(models.TransientModel):
         ICP.set_param('ochat.central_server_url', self.ochat_central_server_url or 'http://localhost:8000')
 
     def action_ochat_register(self):
-        """Enregistre cette instance auprès du serveur central"""
+        """Registers this instance with the central server"""
         self.ensure_one()
 
         # Automatically save the configuration settings first
@@ -67,7 +67,7 @@ class ResConfigSettings(models.TransientModel):
 
         ICP = self.env['ir.config_parameter'].sudo()
 
-        # Récupérer l'URL de base d'Odoo
+        # Retrieve Odoo's base URL
         base_url = ICP.get_param('web.base.url')
         webhook_url = f"{base_url}/ochat/webhook"
 
@@ -78,25 +78,25 @@ class ResConfigSettings(models.TransientModel):
         if not instance_name:
             raise UserError(_("Please set an Instance Name before registering."))
 
-        # Générer une paire de clés RSA pour le chiffrement E2E
+        # Generate an RSA keypair for E2E encryption
         _logger.info("🔐 Generating RSA keypair for encryption...")
         private_key_pem, public_key_pem = generate_rsa_keypair()
 
-        # Stocker la clé privée localement (jamais partagée!)
+        # Store the private key locally (never shared!)
         ICP.set_param('ochat.private_key', private_key_pem)
         _logger.info("🔑 Private key stored securely")
 
-        # Préparer les données d'enregistrement avec la clé publique
+        # Prepare registration data with the public key
         data = {
             'uuid': instance_uuid,
             'name': instance_name,
             'domain': base_url,
             'webhook_url': webhook_url,
-            'public_key': public_key_pem  # Envoyer la clé publique au serveur
+            'public_key': public_key_pem  # Send the public key to the server
         }
 
         try:
-            # Envoyer la requête d'enregistrement
+            # Send the registration request
             response = requests.post(
                 f"{central_server_url}/api/v1/instances/register",
                 json=data,
@@ -104,7 +104,7 @@ class ResConfigSettings(models.TransientModel):
             )
 
             if response.status_code == 200:
-                # Récupérer et stocker l'API key et le webhook secret retournés par le serveur
+                # Retrieve and store the API key and webhook secret returned by the server
                 response_data = response.json()
                 api_key = response_data.get('api_key')
                 webhook_secret = response_data.get('webhook_secret')
@@ -122,7 +122,7 @@ class ResConfigSettings(models.TransientModel):
                     _logger.warning("⚠️ No webhook secret in registration response")
 
                 ICP.set_param('ochat.is_registered', 'True')
-                # Recharger les valeurs
+                # Reload the values
                 self.ochat_is_registered = True
                 _logger.info(f"✅ Successfully registered instance {instance_name} with central server")
                 return {

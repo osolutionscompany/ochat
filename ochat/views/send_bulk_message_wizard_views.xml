@@ -32,6 +32,6 @@
         <field name="view_mode">form</field>
         <field name="target">new</field>
         <field name="binding_model_id" ref="model_ochat_connection"/>
-        <field name="binding_view_types">list</field>
+        <field name="binding_view_types">tree</field>
     </record>
 </odoo>
