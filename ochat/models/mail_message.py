@@ -54,41 +54,64 @@ class MailMessage(models.Model):
         readonly=True
     )
 
-    def _to_store(self, store, /, **kwargs):
+    def write(self, vals):
+        """
+        Override write to send bus notification when O'Chat status changes
+        """
+        # Check if any O'Chat field is being updated
+        ochat_fields_updated = any(
+            field in vals
+            for field in ['ochat_delivery_status', 'ochat_fastapi_message_id', 'ochat_retry_count',
+                         'ochat_failed_reason', 'ochat_delivered_at', 'ochat_read_at']
+        )
+
+        result = super().write(vals)
+
+        # Send bus notification if O'Chat fields changed
+        if ochat_fields_updated:
+            for message in self:
+                if message.model == 'discuss.channel' and message.res_id:
+                    channel = self.env['discuss.channel'].browse(message.res_id)
+                    if channel.exists() and channel.channel_type == 'ochat':
+                        try:
+                            from odoo.addons.mail.tools.discuss import Store
+
+                            # Send notification to all channel members
+                            # V19: Use Store with bus_channel and call bus_send()
+                            for member in channel.channel_member_ids:
+                                if member.partner_id and member.partner_id.main_user_id:
+                                    user = member.partner_id.main_user_id
+                                    store = Store(bus_channel=user)
+                                    # Pass empty list instead of None to avoid issues with rating module
+                                    message.with_user(user)._to_store(store, fields=[])
+                                    store.bus_send()
+
+                        except Exception as e:
+                            _logger.warning(f"Could not send O'Chat status update notification: {e}")
+
+        return result
+
+    def _to_store(self, store, /, fields=None, **kwargs):
         """
         Override _to_store to add O'Chat fields to the store
+        V19: Call parent first, then add our fields using add_model_values
         """
-        # Add O'Chat fields to the fields list to retrieve
-        fields = kwargs.get('fields')
-        if fields is None:
-            # Use parent's default fields
-            super()._to_store(store, **kwargs)
-        else:
-            # Add our custom fields to the list
-            ochat_fields = [
-                'ochat_fastapi_message_id',
-                'ochat_delivery_status',
-                'ochat_retry_count',
-                'ochat_failed_reason',
-                'ochat_delivered_at',
-                'ochat_read_at',
-            ]
-            # Create a new list with all fields
-            all_fields = list(fields) + ochat_fields
-            kwargs['fields'] = all_fields
-            super()._to_store(store, **kwargs)
+        # Call parent first to handle the base fields
+        super()._to_store(store, fields=fields, **kwargs)
 
-        # Add O'Chat fields to the store for each message
+        # Add O'Chat fields to the store using add_model_values
+        # Loop through each message in case self is a recordset
         for message in self:
-            data = {
-                'ochat_fastapi_message_id': message.ochat_fastapi_message_id,
-                'ochat_delivery_status': message.ochat_delivery_status,
-                'ochat_retry_count': message.ochat_retry_count,
-                'ochat_failed_reason': message.ochat_failed_reason,
-                'ochat_delivered_at': message.ochat_delivered_at.isoformat() if message.ochat_delivered_at else False,
-                'ochat_read_at': message.ochat_read_at.isoformat() if message.ochat_read_at else False,
-            }
-            store.add(message, data)
+            if message.ochat_delivery_status:
+                store.add_model_values('mail.message', {
+                    'id': message.id,
+                    'ochat_fastapi_message_id': message.ochat_fastapi_message_id,
+                    'ochat_delivery_status': message.ochat_delivery_status,
+                    'ochat_retry_count': message.ochat_retry_count,
+                    'ochat_failed_reason': message.ochat_failed_reason,
+                    'ochat_delivered_at': message.ochat_delivered_at,
+                    'ochat_read_at': message.ochat_read_at,
+                })
 
     def get_ochat_status_icon(self):
         """
@@ -151,7 +174,7 @@ class MailMessage(models.Model):
         ], limit=1)
 
         if not message:
-            _logger.warning(f"FastAPI message {fastapi_message_id} not found in Odoo")
+            _logger.warning(f"O'Chat message {fastapi_message_id} not found")
             return False
 
         vals = {'ochat_delivery_status': status}
@@ -177,24 +200,6 @@ class MailMessage(models.Model):
             vals['ochat_retry_count'] = metadata.get('retry_count', 0)
             vals['ochat_failed_reason'] = metadata.get('error', 'Unknown error')
 
+        # write() will automatically trigger bus notification via our override
         message.write(vals)
-
-        # Trigger real-time interface update via bus notification
-        if message.model == 'discuss.channel' and message.res_id:
-            channel = self.env['discuss.channel'].browse(message.res_id)
-            if channel.exists():
-                try:
-                    from odoo.addons.mail.models.discuss.mail_guest import Store
-
-                    store = Store()
-                    message._to_store(store, for_current_user=False)
-
-                    # Send notification to each channel member
-                    for member in channel.channel_member_ids:
-                        if member.partner_id:
-                            member.partner_id._bus_send_store(store)
-
-                except Exception as e:
-                    _logger.warning(f"Could not send bus notification: {e}")
-
         return True

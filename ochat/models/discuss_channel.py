@@ -38,6 +38,20 @@ class DiscussChannel(models.Model):
                   channel_names=', '.join(missing_connection.mapped('name')))
             )
 
+    def _get_message_create_valid_field_names(self):
+        """Extend valid field names to include O'Chat fields"""
+        valid_fields = super()._get_message_create_valid_field_names()
+        # Add O'Chat specific fields
+        valid_fields.update({
+            'ochat_fastapi_message_id',
+            'ochat_delivery_status',
+            'ochat_retry_count',
+            'ochat_failed_reason',
+            'ochat_delivered_at',
+            'ochat_read_at',
+        })
+        return valid_fields
+
     def message_post(self, **kwargs):
         """Override message_post to send O'Chat messages via central server"""
         self.ensure_one()
@@ -48,10 +62,14 @@ class DiscussChannel(models.Model):
 
         # Si c'est un canal O'Chat ET ce n'est pas un message entrant
         if self.channel_type == 'ochat' and self.ochat_connection_id and not ochat_incoming:
-            # D'abord créer le message localement
+            # Ajouter les champs O'Chat AVANT la création pour qu'ils soient inclus dans la notification initiale
+            kwargs['ochat_delivery_status'] = 'pending'
+            kwargs['ochat_retry_count'] = 0
+
+            # Créer le message localement avec les champs O'Chat
             message = super().message_post(**kwargs)
 
-            # Ensuite l'envoyer via O'Chat avec les attachments
+            # Envoyer via O'Chat avec les attachments
             try:
                 self._send_ochat_message(
                     content=html2plaintext(kwargs.get('body', '')),
@@ -59,7 +77,12 @@ class DiscussChannel(models.Model):
                 )
             except Exception as e:
                 _logger.error(f"❌ Failed to send O'Chat message: {str(e)}")
-                # Le message reste visible localement même si l'envoi échoue
+                # Marquer comme failed si l'envoi échoue
+                # Le write() déclenchera automatiquement la notification bus
+                message.write({
+                    'ochat_delivery_status': 'failed',
+                    'ochat_failed_reason': str(e)
+                })
 
             return message
 
@@ -156,25 +179,11 @@ class DiscussChannel(models.Model):
 
         if fastapi_message_id and message:
             # Store FastAPI ID in Odoo message for tracking
+            # Le write() déclenchera automatiquement la notification bus
             message.write({
                 'ochat_fastapi_message_id': fastapi_message_id,
-                'ochat_delivery_status': 'pending'
+                'ochat_delivery_status': 'sent'
             })
-
-            # Send bus notification to update interface in real-time
-            try:
-                from odoo.addons.mail.models.discuss.mail_guest import Store
-
-                store = Store()
-                message._to_store(store, for_current_user=False)
-
-                # Notify all channel members
-                for member in self.channel_member_ids:
-                    if member.partner_id:
-                        member.partner_id._bus_send_store(store)
-
-            except Exception as e:
-                _logger.warning(f"Could not send initial status notification: {e}")
 
     def _notify_ochat_incoming_message(self):
         """
