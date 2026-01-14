@@ -37,7 +37,7 @@
                         <field name="channel_id" readonly="1"/>
                     </group>
                     <notebook>
-                        <page string="Additional Members" name="members">
+                        <page string="Members" name="members">
                             <field name="partner_ids">
                                 <list>
                                     <field name="name"/>
