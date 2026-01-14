@@ -212,8 +212,17 @@ class OchatConnection(models.Model):
                     }
                 }
             else:
+                # Parser le JSON pour extraire le message détaillé
+                error_message = f"Error {response.status_code}"
+                try:
+                    error_data = response.json()
+                    if 'detail' in error_data:
+                        error_message = error_data['detail']
+                except:
+                    error_message = response.text or error_message
+
                 _logger.error(f"❌ Failed to send message: {response.status_code} - {response.text}")
-                raise UserError(f"Failed to send message: {response.status_code}")
+                raise UserError(_("Failed to send message: %s", error_message))
 
         except requests.exceptions.RequestException as e:
             _logger.error(f"❌ Connection error: {str(e)}")

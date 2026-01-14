@@ -144,10 +144,18 @@ class DiscussChannel(models.Model):
         )
 
         if response.status_code != 200:
+            # Parser le JSON pour extraire le message détaillé
+            error_message = response.text
+            try:
+                error_data = response.json()
+                if 'detail' in error_data:
+                    error_message = error_data['detail']
+            except:
+                pass
+
+            _logger.error(f"❌ Failed to send message: {response.status_code} - {response.text}")
             raise UserError(
-                _("Failed to send O'Chat message: %(status)s - %(text)s",
-                  status=response.status_code,
-                  text=response.text)
+                _("Failed to send O'Chat message: %s", error_message)
             )
 
         # Get the FastAPI message ID from response
