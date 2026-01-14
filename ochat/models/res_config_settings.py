@@ -24,7 +24,7 @@ class ResConfigSettings(models.TransientModel):
     ochat_central_server_url = fields.Char(
         string='Central Server URL',
         config_parameter='ochat.central_server_url',
-        default='http://localhost:8000',
+        default='https://api.ochat.osolutions.app',
     )
     ochat_is_registered = fields.Boolean(
         string='Is Registered',
