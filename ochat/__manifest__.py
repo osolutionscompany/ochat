@@ -4,6 +4,9 @@
     'category': 'Discuss',
     'summary': 'Inter-instance communication for Odoo',
     'depends': ['base', 'mail', 'helpdesk'],
+    'external_dependencies': {
+        'python': ['pycryptodome']
+    },
     'data': [
         'security/ir.model.access.csv',
         'data/ir_cron.xml',
