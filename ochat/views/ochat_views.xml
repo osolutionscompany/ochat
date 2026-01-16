@@ -30,9 +30,10 @@
                 </header>
                 <sheet>
                     <group>
-                        <field name="partner_id" placeholder="Select contact partner"/>
+                        <field name="partner_id" placeholder="Select contact partner" required="1"/>
                         <field name="remote_instance_uuid"
-                               placeholder="UUID of the remote instance"/>
+                               placeholder="UUID of the remote instance"
+                               required="1"/>
                         <field name="status"/>
                         <field name="channel_id" readonly="1"/>
                     </group>

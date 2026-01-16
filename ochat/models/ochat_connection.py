@@ -6,12 +6,6 @@ from odoo.exceptions import UserError, ValidationError
 _logger = logging.getLogger(__name__)
 
 
-# TODO :
-# 1. Il faut que ca créé automatiquement le canal lors de la création de la connection comme ca on peut ajouter également les partners directement dessus
-# 2. Il faut que le message POP dans l'écran des partners lorsqu'on le recoit
-# 3. Il faut implémenter la partie réponse maintenant
-# 4. Je crois qu'on devrait faire un channel type O'Chat puor ne pas casser l'héritage et se baser de comment les messages sont reçu et envoyés dans le module whatsapp
-
 class OchatConnection(models.Model):
     _name = 'ochat.connection'
     _description = "O'Chat Connection"
@@ -20,8 +14,8 @@ class OchatConnection(models.Model):
     partner_id = fields.Many2one(
         'res.partner',
         string='Contact',
-        required=True,
-        ondelete='cascade'
+        ondelete='cascade',
+        copy=False
     )
     name = fields.Char(
         string='Name',
@@ -29,7 +23,7 @@ class OchatConnection(models.Model):
         store=True,
         readonly=True
     )
-    remote_instance_uuid = fields.Char(string='Remote Instance UUID', required=True)
+    remote_instance_uuid = fields.Char(string='Remote Instance UUID', copy=False)
     status = fields.Selection([
         ('pending', 'Pending'),
         ('active', 'Active'),
@@ -41,8 +35,18 @@ class OchatConnection(models.Model):
         'ochat_connection_partner_rel',
         'connection_id',
         'partner_id',
-        string='Additional Members'
+        string='Additional Members',
+        default=lambda self: [self.env.user.partner_id.id]
     )
+
+    @api.constrains('partner_id', 'remote_instance_uuid')
+    def _check_required_fields(self):
+        """Ensure partner_id and remote_instance_uuid are filled when saving"""
+        for connection in self:
+            if not connection.partner_id:
+                raise ValidationError(_("Contact is required and cannot be empty."))
+            if not connection.remote_instance_uuid:
+                raise ValidationError(_("Remote Instance UUID is required and cannot be empty."))
 
     @api.constrains('remote_instance_uuid')
     def _check_unique_remote_instance_uuid(self):
@@ -98,7 +102,7 @@ class OchatConnection(models.Model):
             if not connection.channel_id:
                 continue
 
-            # Tous les partners à inclure : principal + additionnels
+            # Tous les partners à inclure : principal + additionnels (qui inclut maintenant le créateur)
             all_partners = connection.partner_id | connection.partner_ids
 
             # Récupérer les membres actuels du channel
