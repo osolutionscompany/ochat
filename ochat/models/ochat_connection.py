@@ -24,11 +24,20 @@ class OchatConnection(models.Model):
         readonly=True
     )
     remote_instance_uuid = fields.Char(string='Remote Instance UUID', copy=False)
+
+    # Nouveaux champs pour le système de demande de connexion
     status = fields.Selection([
+        ('draft', 'Draft'),
         ('pending', 'Pending'),
-        ('active', 'Active'),
-        ('blocked', 'Blocked')
-    ], string='Status', default='active')
+        ('not_found', 'Instance Not Found'),
+        ('accepted', 'Accepted'),
+        ('rejected', 'Rejected')
+    ], string='Status', default='draft', required=True)
+    request_id = fields.Integer(string='Request ID', readonly=True, help='Connection request ID on central server')
+    request_message = fields.Text(string='Request Message', help='Optional message when sending connection request')
+    rejection_reason = fields.Text(string='Rejection Reason', readonly=True, help='Reason for rejection if refused')
+    is_incoming = fields.Boolean(string='Is Incoming', default=False, readonly=True, help='True if this is a received connection request')
+
     channel_id = fields.Many2one('discuss.channel', string='Discussion Channel')
     partner_ids = fields.Many2many(
         'res.partner',
@@ -66,12 +75,13 @@ class OchatConnection(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        """Override create to automatically create channel and sync members"""
+        """Override create to automatically create channel and sync members (only if accepted)"""
         connections = super().create(vals_list)
 
         for connection in connections:
-            # Créer automatiquement le canal O'Chat
-            if not connection.channel_id:
+            # Créer le canal O'Chat UNIQUEMENT si status='accepted'
+            # Pour le nouveau workflow, le channel est créé après acceptation de la demande
+            if connection.status == 'accepted' and not connection.channel_id:
                 channel = self.env['discuss.channel'].create({
                     'name': f"{connection.name}",
                     'description': f"Inter-instance communication with {connection.name}",
@@ -79,16 +89,32 @@ class OchatConnection(models.Model):
                     'ochat_connection_id': connection.id,
                 })
                 connection.channel_id = channel.id
-                _logger.info(f"✅ Auto-created O'Chat channel for new connection {connection.name}")
+                _logger.info(f"✅ Auto-created O'Chat channel for accepted connection {connection.name}")
 
-            # Synchroniser les partners (principal + additionnels)
-            connection._sync_channel_members()
+                # Synchroniser les partners (principal + additionnels)
+                connection._sync_channel_members()
 
         return connections
 
     def write(self, vals):
-        """Override write to sync channel members when partners change"""
+        """Override write to sync channel members when partners change and create channel on acceptance"""
         res = super().write(vals)
+
+        # Créer le channel si status passe à 'accepted'
+        if 'status' in vals and vals['status'] == 'accepted':
+            for connection in self:
+                if not connection.channel_id:
+                    channel = self.env['discuss.channel'].create({
+                        'name': f"{connection.name}",
+                        'description': f"Inter-instance communication with {connection.name}",
+                        'channel_type': 'ochat',
+                        'ochat_connection_id': connection.id,
+                    })
+                    connection.channel_id = channel.id
+                    _logger.info(f"✅ Created O'Chat channel after connection acceptance: {connection.name}")
+
+                    # Synchroniser les partners
+                    connection._sync_channel_members()
 
         # Re-sync si le partner principal ou les membres additionnels changent
         if 'partner_id' in vals or 'partner_ids' in vals:
@@ -231,3 +257,384 @@ class OchatConnection(models.Model):
         except requests.exceptions.RequestException as e:
             _logger.error(f"❌ Connection error: {str(e)}")
             raise UserError(f"Could not connect to central server: {str(e)}")
+
+    def action_send_request(self):
+        """Envoyer une demande de connexion au serveur central"""
+        self.ensure_one()
+
+        if self.status not in ['draft', 'not_found']:
+            raise UserError(_("Can only send request from draft or not_found status"))
+
+        # Récupérer la configuration O'Chat
+        ICP = self.env['ir.config_parameter'].sudo()
+        instance_uuid = ICP.get_param('ochat.instance_uuid')
+        central_server_url = ICP.get_param('ochat.central_server_url')
+        api_key = ICP.get_param('ochat.api_key')
+        is_registered = ICP.get_param('ochat.is_registered', 'False') == 'True'
+
+        if not is_registered or not api_key:
+            raise UserError(_("Please register this instance with the central server first (Settings > O'Chat)"))
+
+        # Préparer les données de la demande
+        data = {
+            'source_uuid': instance_uuid,
+            'target_uuid': self.remote_instance_uuid,
+            'message': self.request_message or ''
+        }
+
+        headers = {
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json'
+        }
+
+        try:
+            response = requests.post(
+                f"{central_server_url}/api/v1/connections/request",
+                json=data,
+                headers=headers,
+                timeout=10
+            )
+
+            if response.status_code == 200:
+                result = response.json()
+                self.write({
+                    'request_id': result['request_id'],
+                    'status': result['status'],  # 'pending' ou 'not_found'
+                    'is_incoming': False
+                })
+                _logger.info(f"✅ Connection request sent successfully to {self.remote_instance_uuid}")
+
+                return {
+                    'type': 'ir.actions.client',
+                    'tag': 'display_notification',
+                    'params': {
+                        'title': _('Success'),
+                        'message': _('Connection request sent!') if result['status'] == 'pending' else _('Instance not found. Request saved for retry.'),
+                        'type': 'success' if result['status'] == 'pending' else 'warning',
+                        'sticky': False,
+                    }
+                }
+            else:
+                error_message = f"Error {response.status_code}"
+                try:
+                    error_data = response.json()
+                    if 'detail' in error_data:
+                        error_message = error_data['detail']
+                except:
+                    error_message = response.text or error_message
+
+                _logger.error(f"❌ Failed to send connection request: {response.status_code} - {response.text}")
+                raise UserError(_("Failed to send request: %s", error_message))
+
+        except requests.exceptions.RequestException as e:
+            _logger.error(f"❌ Connection error: {str(e)}")
+            raise UserError(f"Could not connect to central server: {str(e)}")
+
+    def action_accept_request(self):
+        """Accepter une demande de connexion reçue"""
+        self.ensure_one()
+
+        if self.status != 'pending' or not self.is_incoming:
+            raise UserError(_("Can only accept pending incoming requests"))
+
+        # Récupérer la configuration O'Chat
+        ICP = self.env['ir.config_parameter'].sudo()
+        central_server_url = ICP.get_param('ochat.central_server_url')
+        api_key = ICP.get_param('ochat.api_key')
+
+        if not api_key:
+            raise UserError(_("Missing API key. Please re-register this instance."))
+
+        headers = {
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json'
+        }
+
+        try:
+            response = requests.put(
+                f"{central_server_url}/api/v1/connections/request/{self.request_id}/accept",
+                headers=headers,
+                timeout=10
+            )
+
+            if response.status_code == 200:
+                self.write({'status': 'accepted'})
+                # Le channel sera créé automatiquement par write()
+                _logger.info(f"✅ Connection request accepted: {self.name}")
+
+                return {
+                    'type': 'ir.actions.client',
+                    'tag': 'display_notification',
+                    'params': {
+                        'title': _('Success'),
+                        'message': _('Connection accepted! You can now communicate.'),
+                        'type': 'success',
+                        'sticky': False,
+                    }
+                }
+            else:
+                error_message = f"Error {response.status_code}"
+                try:
+                    error_data = response.json()
+                    if 'detail' in error_data:
+                        error_message = error_data['detail']
+                except:
+                    error_message = response.text or error_message
+
+                _logger.error(f"❌ Failed to accept request: {response.status_code} - {response.text}")
+                raise UserError(_("Failed to accept: %s", error_message))
+
+        except requests.exceptions.RequestException as e:
+            _logger.error(f"❌ Connection error: {str(e)}")
+            raise UserError(f"Could not connect to central server: {str(e)}")
+
+    def action_reject_request(self):
+        """Refuser une demande de connexion reçue"""
+        self.ensure_one()
+
+        if self.status != 'pending' or not self.is_incoming:
+            raise UserError(_("Can only reject pending incoming requests"))
+
+        # Récupérer la configuration O'Chat
+        ICP = self.env['ir.config_parameter'].sudo()
+        central_server_url = ICP.get_param('ochat.central_server_url')
+        api_key = ICP.get_param('ochat.api_key')
+
+        if not api_key:
+            raise UserError(_("Missing API key. Please re-register this instance."))
+
+        headers = {
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json'
+        }
+
+        # Ouvrir un wizard pour saisir la raison (optionnel pour l'instant, on met une raison par défaut)
+        reason = "Connection request rejected"
+
+        try:
+            response = requests.put(
+                f"{central_server_url}/api/v1/connections/request/{self.request_id}/reject",
+                json={'reason': reason},
+                headers=headers,
+                timeout=10
+            )
+
+            if response.status_code == 200:
+                self.write({
+                    'status': 'rejected',
+                    'rejection_reason': reason
+                })
+                _logger.info(f"✅ Connection request rejected: {self.name}")
+
+                return {
+                    'type': 'ir.actions.client',
+                    'tag': 'display_notification',
+                    'params': {
+                        'title': _('Success'),
+                        'message': _('Connection request rejected.'),
+                        'type': 'info',
+                        'sticky': False,
+                    }
+                }
+            else:
+                error_message = f"Error {response.status_code}"
+                try:
+                    error_data = response.json()
+                    if 'detail' in error_data:
+                        error_message = error_data['detail']
+                except:
+                    error_message = response.text or error_message
+
+                _logger.error(f"❌ Failed to reject request: {response.status_code} - {response.text}")
+                raise UserError(_("Failed to reject: %s", error_message))
+
+        except requests.exceptions.RequestException as e:
+            _logger.error(f"❌ Connection error: {str(e)}")
+            raise UserError(f"Could not connect to central server: {str(e)}")
+
+    def action_sync_connection_status(self):
+        """Synchroniser le statut d'une connexion avec le serveur central"""
+        self.ensure_one()
+
+        if self.status not in ['pending', 'not_found']:
+            raise UserError(_("Can only sync pending or not_found connections"))
+
+        # Récupérer la configuration O'Chat
+        ICP = self.env['ir.config_parameter'].sudo()
+        central_server_url = ICP.get_param('ochat.central_server_url')
+        api_key = ICP.get_param('ochat.api_key')
+
+        if not api_key or not self.request_id:
+            raise UserError(_("Missing API key or request ID"))
+
+        headers = {
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json'
+        }
+
+        try:
+            response = requests.get(
+                f"{central_server_url}/api/v1/connections/request/{self.request_id}",
+                headers=headers,
+                timeout=10
+            )
+
+            if response.status_code == 200:
+                data = response.json()
+                old_status = self.status
+                self.write({
+                    'status': data['status'],
+                    'rejection_reason': data.get('rejection_reason', '')
+                })
+                # Le channel sera créé automatiquement par write() si status='accepted'
+
+                if old_status != data['status']:
+                    _logger.info(f"✅ Connection status updated: {old_status} → {data['status']}")
+                    return {
+                        'type': 'ir.actions.client',
+                        'tag': 'display_notification',
+                        'params': {
+                            'title': _('Updated'),
+                            'message': _('Status updated to: %s', data['status']),
+                            'type': 'success',
+                            'sticky': False,
+                        }
+                    }
+                else:
+                    return {
+                        'type': 'ir.actions.client',
+                        'tag': 'display_notification',
+                        'params': {
+                            'title': _('Info'),
+                            'message': _('Status unchanged: %s', data['status']),
+                            'type': 'info',
+                            'sticky': False,
+                        }
+                    }
+            else:
+                error_message = f"Error {response.status_code}"
+                try:
+                    error_data = response.json()
+                    if 'detail' in error_data:
+                        error_message = error_data['detail']
+                except:
+                    error_message = response.text or error_message
+
+                _logger.error(f"❌ Failed to sync status: {response.status_code} - {response.text}")
+                raise UserError(_("Failed to sync: %s", error_message))
+
+        except requests.exceptions.RequestException as e:
+            _logger.error(f"❌ Connection error: {str(e)}")
+            raise UserError(f"Could not connect to central server: {str(e)}")
+
+    @api.model
+    def _cron_sync_connection_requests(self):
+        """
+        Cron job pour synchroniser automatiquement les demandes de connexion
+        Tourne toutes les 5 minutes
+        """
+        _logger.info("🔄 Starting connection requests synchronization...")
+
+        ICP = self.env['ir.config_parameter'].sudo()
+        central_server_url = ICP.get_param('ochat.central_server_url')
+        api_key = ICP.get_param('ochat.api_key')
+        instance_uuid = ICP.get_param('ochat.instance_uuid')
+        is_registered = ICP.get_param('ochat.is_registered', 'False') == 'True'
+
+        if not is_registered or not api_key:
+            _logger.warning("⚠️ Instance not registered, skipping sync")
+            return
+
+        headers = {
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json'
+        }
+
+        # PARTIE 1: Récupérer les demandes reçues (pending)
+        try:
+            response = requests.get(
+                f"{central_server_url}/api/v1/connections/requests/received",
+                headers=headers,
+                timeout=10
+            )
+
+            if response.status_code == 200:
+                received_requests = response.json()
+
+                for req in received_requests:
+                    # Vérifier si on a déjà cette demande
+                    existing = self.search([('request_id', '=', req['request_id'])], limit=1)
+
+                    if not existing:
+                        # NOUVELLE demande reçue, créer la connexion locale
+                        # Chercher ou créer le partner pour cette instance
+                        partner = self.env['res.partner'].search([
+                            ('name', '=', req['source_name'])
+                        ], limit=1)
+
+                        if not partner:
+                            partner = self.env['res.partner'].create({
+                                'name': req['source_name'],
+                                'company_type': 'company'
+                            })
+
+                        self.create({
+                            'partner_id': partner.id,
+                            'remote_instance_uuid': req['source_uuid'],
+                            'request_id': req['request_id'],
+                            'status': 'pending',
+                            'is_incoming': True,
+                            'request_message': req.get('request_message', ''),
+                        })
+                        _logger.info(f"✅ New incoming connection request from {req['source_name']}")
+
+        except requests.exceptions.RequestException as e:
+            _logger.error(f"❌ Error fetching received requests: {str(e)}")
+
+        # PARTIE 2: Synchroniser les demandes envoyées (vérifier status updates)
+        pending_connections = self.search([
+            ('status', 'in', ['pending', 'not_found']),
+            ('is_incoming', '=', False),
+            ('request_id', '!=', False)
+        ])
+
+        for conn in pending_connections:
+            try:
+                response = requests.get(
+                    f"{central_server_url}/api/v1/connections/request/{conn.request_id}",
+                    headers=headers,
+                    timeout=10
+                )
+
+                if response.status_code == 200:
+                    data = response.json()
+
+                    if data['status'] != conn.status:
+                        _logger.info(f"📝 Updating connection {conn.id}: {conn.status} → {data['status']}")
+
+                        conn.write({
+                            'status': data['status'],
+                            'rejection_reason': data.get('rejection_reason', '')
+                        })
+                        # Le channel sera créé automatiquement par write() si status='accepted'
+
+            except requests.exceptions.RequestException as e:
+                _logger.error(f"❌ Error syncing connection {conn.id}: {str(e)}")
+
+        _logger.info("✅ Connection requests synchronization completed")
+
+    def action_open_channel(self):
+        """
+        Ouvre le canal de discussion associé à cette connexion
+        """
+        self.ensure_one()
+        if not self.channel_id:
+            raise UserError(_("No channel is associated with this connection yet."))
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'discuss.channel',
+            'res_id': self.channel_id.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
