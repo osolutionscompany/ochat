@@ -9,7 +9,7 @@ _logger = logging.getLogger(__name__)
 class OchatConnection(models.Model):
     _name = 'ochat.connection'
     _description = "O'Chat Connection"
-    _rec_name = 'partner_id'
+    _rec_name = 'name'
 
     partner_id = fields.Many2one(
         'res.partner',
@@ -17,9 +17,10 @@ class OchatConnection(models.Model):
         ondelete='cascade',
         copy=False
     )
+    ochat_remote_name = fields.Char(string='Remote Instance Name', copy=False, help='Name of the remote instance')
     name = fields.Char(
         string='Name',
-        related='partner_id.name',
+        compute='_compute_name',
         store=True,
         readonly=True
     )
@@ -37,6 +38,7 @@ class OchatConnection(models.Model):
     request_message = fields.Text(string='Request Message', help='Optional message when sending connection request')
     rejection_reason = fields.Text(string='Rejection Reason', readonly=True, help='Reason for rejection if refused')
     is_incoming = fields.Boolean(string='Is Incoming', default=False, readonly=True, help='True if this is a received connection request')
+    incoming_label = fields.Char(string='Type', compute='_compute_incoming_label', store=False)
 
     channel_id = fields.Many2one('discuss.channel', string='Discussion Channel')
     partner_ids = fields.Many2many(
@@ -48,14 +50,25 @@ class OchatConnection(models.Model):
         default=lambda self: [self.env.user.partner_id.id]
     )
 
-    @api.constrains('partner_id', 'remote_instance_uuid')
-    def _check_required_fields(self):
-        """Ensure partner_id and remote_instance_uuid are filled when saving"""
+    @api.depends('partner_id', 'partner_id.name', 'ochat_remote_name')
+    def _compute_name(self):
+        """Compute display name from partner or remote name"""
         for connection in self:
-            if not connection.partner_id:
-                raise ValidationError(_("Contact is required and cannot be empty."))
+            if connection.partner_id:
+                connection.name = connection.partner_id.name
+            elif connection.ochat_remote_name:
+                connection.name = connection.ochat_remote_name
+            else:
+                connection.name = _('New Connection')
+
+    @api.constrains('remote_instance_uuid', 'partner_id', 'ochat_remote_name')
+    def _check_required_fields(self):
+        """Ensure remote_instance_uuid is filled and either partner_id or ochat_remote_name"""
+        for connection in self:
             if not connection.remote_instance_uuid:
                 raise ValidationError(_("Remote Instance UUID is required and cannot be empty."))
+            if not connection.partner_id and not connection.ochat_remote_name:
+                raise ValidationError(_("Either Contact or Remote Instance Name must be filled."))
 
     @api.constrains('remote_instance_uuid')
     def _check_unique_remote_instance_uuid(self):
@@ -72,6 +85,12 @@ class OchatConnection(models.Model):
                           uuid=connection.remote_instance_uuid,
                           name=duplicate.name)
                     )
+
+    @api.depends('is_incoming')
+    def _compute_incoming_label(self):
+        """Compute label for incoming requests"""
+        for connection in self:
+            connection.incoming_label = 'Nouvelle demande' if connection.is_incoming else ''
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -306,13 +325,7 @@ class OchatConnection(models.Model):
 
                 return {
                     'type': 'ir.actions.client',
-                    'tag': 'display_notification',
-                    'params': {
-                        'title': _('Success'),
-                        'message': _('Connection request sent!') if result['status'] == 'pending' else _('Instance not found. Request saved for retry.'),
-                        'type': 'success' if result['status'] == 'pending' else 'warning',
-                        'sticky': False,
-                    }
+                    'tag': 'reload',
                 }
             else:
                 error_message = f"Error {response.status_code}"
@@ -336,6 +349,9 @@ class OchatConnection(models.Model):
 
         if self.status != 'pending' or not self.is_incoming:
             raise UserError(_("Can only accept pending incoming requests"))
+
+        if not self.partner_id:
+            raise UserError(_("You must select a contact before accepting the connection request."))
 
         # Récupérer la configuration O'Chat
         ICP = self.env['ir.config_parameter'].sudo()
@@ -364,13 +380,7 @@ class OchatConnection(models.Model):
 
                 return {
                     'type': 'ir.actions.client',
-                    'tag': 'display_notification',
-                    'params': {
-                        'title': _('Success'),
-                        'message': _('Connection accepted! You can now communicate.'),
-                        'type': 'success',
-                        'sticky': False,
-                    }
+                    'tag': 'reload',
                 }
             else:
                 error_message = f"Error {response.status_code}"
@@ -428,13 +438,7 @@ class OchatConnection(models.Model):
 
                 return {
                     'type': 'ir.actions.client',
-                    'tag': 'display_notification',
-                    'params': {
-                        'title': _('Success'),
-                        'message': _('Connection request rejected.'),
-                        'type': 'info',
-                        'sticky': False,
-                    }
+                    'tag': 'reload',
                 }
             else:
                 error_message = f"Error {response.status_code}"
@@ -566,20 +570,9 @@ class OchatConnection(models.Model):
                     existing = self.search([('request_id', '=', req['request_id'])], limit=1)
 
                     if not existing:
-                        # NOUVELLE demande reçue, créer la connexion locale
-                        # Chercher ou créer le partner pour cette instance
-                        partner = self.env['res.partner'].search([
-                            ('name', '=', req['source_name'])
-                        ], limit=1)
-
-                        if not partner:
-                            partner = self.env['res.partner'].create({
-                                'name': req['source_name'],
-                                'company_type': 'company'
-                            })
-
+                        # NOUVELLE demande reçue, créer la connexion locale sans partner
                         self.create({
-                            'partner_id': partner.id,
+                            'ochat_remote_name': req['source_name'],
                             'remote_instance_uuid': req['source_uuid'],
                             'request_id': req['request_id'],
                             'status': 'pending',
@@ -622,19 +615,3 @@ class OchatConnection(models.Model):
                 _logger.error(f"❌ Error syncing connection {conn.id}: {str(e)}")
 
         _logger.info("✅ Connection requests synchronization completed")
-
-    def action_open_channel(self):
-        """
-        Ouvre le canal de discussion associé à cette connexion
-        """
-        self.ensure_one()
-        if not self.channel_id:
-            raise UserError(_("No channel is associated with this connection yet."))
-
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'discuss.channel',
-            'res_id': self.channel_id.id,
-            'view_mode': 'form',
-            'target': 'current',
-        }

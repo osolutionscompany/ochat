@@ -88,7 +88,20 @@ class DiscussChannel(models.Model):
         # Préparer les pièces jointes si présentes
         attachments = []
         if message and message.attachment_ids:
+            max_size_mb = 100
+            max_size_bytes = max_size_mb * 1024 * 1024
+
             for attachment in message.attachment_ids:
+                # Vérifier la taille du fichier (file_size est en bytes)
+                if attachment.file_size and attachment.file_size > max_size_bytes:
+                    size_mb = attachment.file_size / (1024 * 1024)
+                    raise UserError(
+                        _("Cannot send file '%(filename)s': file size (%(size).1f MB) exceeds the maximum allowed size of %(max)d MB.",
+                          filename=attachment.name,
+                          size=size_mb,
+                          max=max_size_mb)
+                    )
+
                 # En Odoo, attachment.datas est déjà en base64 (string)
                 # Il faut juste s'assurer que c'est bien une string
                 datas_b64 = attachment.datas

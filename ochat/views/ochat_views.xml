@@ -6,20 +6,15 @@
         <field name="model">ochat.connection</field>
         <field name="arch" type="xml">
             <list>
-                <field name="partner_id"/>
+                <field name="name"/>
+                <field name="incoming_label" widget="badge" decoration-info="incoming_label != ''"/>
                 <field name="remote_instance_uuid"/>
-                <field name="is_incoming" string="Direction"
-                       widget="badge"
-                       decoration-info="is_incoming == True"
-                       decoration-muted="is_incoming == False"/>
                 <field name="status" widget="badge"
                        decoration-success="status == 'accepted'"
                        decoration-warning="status == 'pending'"
                        decoration-danger="status == 'rejected'"
                        decoration-info="status == 'not_found'"
                        decoration-muted="status == 'draft'"/>
-                <field name="created_at"/>
-                <field name="updated_at"/>
             </list>
         </field>
     </record>
@@ -32,7 +27,8 @@
             <search>
                 <field name="partner_id"/>
                 <field name="remote_instance_uuid"/>
-                <filter string="Received Requests" name="filter_received_pending"
+                <filter string="Received Requests"
+                        name="filter_received_pending"
                         domain="[('is_incoming', '=', True), ('status', '=', 'pending')]"/>
                 <filter string="Sent Requests" name="filter_sent"
                         domain="[('is_incoming', '=', False)]"/>
@@ -48,8 +44,10 @@
                 <filter string="Not Found" name="filter_not_found"
                         domain="[('status', '=', 'not_found')]"/>
                 <group expand="0" string="Group By">
-                    <filter string="Status" name="group_status" context="{'group_by': 'status'}"/>
-                    <filter string="Direction" name="group_direction" context="{'group_by': 'is_incoming'}"/>
+                    <filter string="Status" name="group_status"
+                            context="{'group_by': 'status'}"/>
+                    <filter string="Direction" name="group_direction"
+                            context="{'group_by': 'is_incoming'}"/>
                 </group>
             </search>
         </field>
@@ -91,55 +89,25 @@
                            statusbar_visible="draft,pending,accepted"/>
                 </header>
                 <sheet>
-                    <div class="oe_button_box" name="button_box">
-                        <button class="oe_stat_button" name="action_open_channel"
-                                type="object" icon="fa-comments"
-                                invisible="channel_id == False">
-                            <div class="o_field_widget o_stat_info">
-                                <span class="o_stat_text">Open Channel</span>
-                            </div>
-                        </button>
-                    </div>
-                    <widget name="web_ribbon" title="Incoming"
-                            bg_color="bg-info"
-                            invisible="is_incoming == False"/>
-                    <widget name="web_ribbon" title="Rejected"
-                            bg_color="bg-danger"
-                            invisible="status != 'rejected'"/>
-                    <widget name="web_ribbon" title="Not Found"
-                            bg_color="bg-warning"
-                            invisible="status != 'not_found'"/>
                     <group>
                         <group>
-                            <field name="partner_id" placeholder="Select contact partner"
-                                   required="1"
-                                   readonly="status != 'draft'"/>
+                            <field name="ochat_remote_name"
+                                   readonly="1"
+                                   invisible="partner_id != False or is_incoming == False"/>
+                            <field name="partner_id"
+                                   placeholder="Select contact partner"
+                                   readonly="status == 'accepted'"/>
                             <field name="remote_instance_uuid"
                                    placeholder="UUID of the remote instance"
                                    required="1"
-                                   readonly="status != 'draft'"/>
-                            <field name="is_incoming" readonly="1"/>
-                            <field name="request_id" readonly="1"
-                                   invisible="request_id == False"/>
+                                   readonly="status not in ['draft','not_found']"/>
                         </group>
                         <group>
                             <field name="channel_id" readonly="1"
                                    invisible="channel_id == False"/>
-                            <field name="created_at" readonly="1"/>
-                            <field name="updated_at" readonly="1"/>
                         </group>
                     </group>
                     <notebook>
-                        <page string="Request Details" name="request_details">
-                            <group>
-                                <field name="request_message"
-                                       placeholder="Optional message to include with your connection request..."
-                                       readonly="status != 'draft'"/>
-                                <field name="rejection_reason"
-                                       readonly="1"
-                                       invisible="status != 'rejected'"/>
-                            </group>
-                        </page>
                         <page string="Members" name="members"
                               invisible="channel_id == False">
                             <field name="partner_ids">
