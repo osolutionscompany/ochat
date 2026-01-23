@@ -228,7 +228,7 @@ class OchatActionsWizard(models.TransientModel):
                             'is_incoming': is_incoming,
                             'request_message': conn_data.get('request_message', ''),
                             'rejection_reason': conn_data.get('rejection_reason', ''),
-                            'ochat_remote_name': conn_data['source_name'],
+                            'ochat_remote_name': conn_data['source_name'] if is_incoming else conn_data['target_name'],
                             'channel_id': False,
                         }
 
