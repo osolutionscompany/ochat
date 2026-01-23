@@ -94,7 +94,7 @@
                         <group>
                             <field name="ochat_remote_name"
                                    readonly="1"
-                                   invisible="partner_id != False or is_incoming == False"/>
+                                   invisible="partner_id != False"/>
                             <field name="partner_id"
                                    placeholder="Select contact partner"/>
                             <field name="remote_instance_uuid"
