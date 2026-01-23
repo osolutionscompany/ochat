@@ -25,17 +25,22 @@ class DiscussChannel(models.Model):
         string="O'Chat Connection",
         index='btree_not_null'
     )
+    ochat_remote_instance_uuid = fields.Char(
+        string="Remote Instance UUID",
+        help="UUID of the remote instance. Used to find existing channels when recreating a connection.",
+        index=True
+    )
 
-    @api.constrains('channel_type', 'ochat_connection_id')
+    @api.constrains('channel_type', 'ochat_remote_instance_uuid')
     def _check_ochat_connection(self):
-        """Ensure O'Chat channels have a connection"""
-        missing_connection = self.filtered(
-            lambda channel: channel.channel_type == 'ochat' and not channel.ochat_connection_id
+        """Ensure O'Chat channels have a remote instance UUID"""
+        missing_uuid = self.filtered(
+            lambda channel: channel.channel_type == 'ochat' and not channel.ochat_remote_instance_uuid
         )
-        if missing_connection:
+        if missing_uuid:
             raise ValidationError(
-                _("An O'Chat connection is required for O'Chat channels %(channel_names)s",
-                  channel_names=', '.join(missing_connection.mapped('name')))
+                _("A remote instance UUID is required for O'Chat channels %(channel_names)s",
+                  channel_names=', '.join(missing_uuid.mapped('name')))
             )
 
     def message_post(self, **kwargs):

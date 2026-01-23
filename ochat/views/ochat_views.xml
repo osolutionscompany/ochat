@@ -7,7 +7,8 @@
         <field name="arch" type="xml">
             <list>
                 <field name="name"/>
-                <field name="incoming_label" widget="badge" decoration-info="incoming_label != ''"/>
+                <field name="incoming_label" widget="badge"
+                       decoration-info="incoming_label != ''"/>
                 <field name="remote_instance_uuid"/>
                 <field name="status" widget="badge"
                        decoration-success="status == 'accepted'"
@@ -95,8 +96,7 @@
                                    readonly="1"
                                    invisible="partner_id != False or is_incoming == False"/>
                             <field name="partner_id"
-                                   placeholder="Select contact partner"
-                                   readonly="status == 'accepted'"/>
+                                   placeholder="Select contact partner"/>
                             <field name="remote_instance_uuid"
                                    placeholder="UUID of the remote instance"
                                    required="1"

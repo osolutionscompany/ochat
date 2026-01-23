@@ -90,7 +90,7 @@ class OchatConnection(models.Model):
     def _compute_incoming_label(self):
         """Compute label for incoming requests"""
         for connection in self:
-            connection.incoming_label = 'Nouvelle demande' if connection.is_incoming else ''
+            connection.incoming_label = 'New request' if connection.is_incoming and connection.status == 'pending' else ''
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -101,14 +101,9 @@ class OchatConnection(models.Model):
             # Créer le canal O'Chat UNIQUEMENT si status='accepted'
             # Pour le nouveau workflow, le channel est créé après acceptation de la demande
             if connection.status == 'accepted' and not connection.channel_id:
-                channel = self.env['discuss.channel'].create({
-                    'name': f"{connection.name}",
-                    'description': f"Inter-instance communication with {connection.name}",
-                    'channel_type': 'ochat',
-                    'ochat_connection_id': connection.id,
-                })
+                # Utiliser la méthode qui cherche d'abord un channel existant
+                channel = connection._find_or_create_ochat_channel()
                 connection.channel_id = channel.id
-                _logger.info(f"✅ Auto-created O'Chat channel for accepted connection {connection.name}")
 
                 # Synchroniser les partners (principal + additionnels)
                 connection._sync_channel_members()
@@ -123,14 +118,9 @@ class OchatConnection(models.Model):
         if 'status' in vals and vals['status'] == 'accepted':
             for connection in self:
                 if not connection.channel_id:
-                    channel = self.env['discuss.channel'].create({
-                        'name': f"{connection.name}",
-                        'description': f"Inter-instance communication with {connection.name}",
-                        'channel_type': 'ochat',
-                        'ochat_connection_id': connection.id,
-                    })
+                    # Utiliser la méthode qui cherche d'abord un channel existant
+                    channel = connection._find_or_create_ochat_channel()
                     connection.channel_id = channel.id
-                    _logger.info(f"✅ Created O'Chat channel after connection acceptance: {connection.name}")
 
                     # Synchroniser les partners
                     connection._sync_channel_members()
@@ -140,6 +130,39 @@ class OchatConnection(models.Model):
             self._sync_channel_members()
 
         return res
+
+    def _find_or_create_ochat_channel(self):
+        """
+        Trouve un channel existant pour ce remote_instance_uuid ou en crée un nouveau.
+        Cela permet de réutiliser un channel si la connexion a été supprimée par erreur.
+        """
+        self.ensure_one()
+
+        # Chercher un channel existant pour ce remote_instance_uuid
+        # On utilise le champ ochat_remote_instance_uuid pour retrouver les channels orphelins
+        existing_channel = self.env['discuss.channel'].search([
+            ('channel_type', '=', 'ochat'),
+            ('ochat_remote_instance_uuid', '=', self.remote_instance_uuid)
+        ], limit=1)
+
+        if existing_channel:
+            _logger.info(f"♻️ Réutilisation du channel existant {existing_channel.name} (ID: {existing_channel.id}) pour {self.remote_instance_uuid}")
+            # Reconnecter le channel à cette connexion si ce n'est pas déjà le cas
+            if existing_channel.ochat_connection_id != self:
+                existing_channel.ochat_connection_id = self.id
+                _logger.info(f"🔗 Channel reconnecté à la connexion {self.name}")
+            return existing_channel
+
+        # Sinon, créer un nouveau channel
+        channel = self.env['discuss.channel'].create({
+            'name': f"{self.name}",
+            'description': f"Inter-instance communication with {self.name}",
+            'channel_type': 'ochat',
+            'ochat_connection_id': self.id,
+            'ochat_remote_instance_uuid': self.remote_instance_uuid,
+        })
+        _logger.info(f"✅ Création d'un nouveau channel O'Chat pour {self.name} (UUID: {self.remote_instance_uuid})")
+        return channel
 
     def _sync_channel_members(self):
         """Synchronize discuss.channel.member with partner_id + partner_ids"""
@@ -192,15 +215,9 @@ class OchatConnection(models.Model):
 
         # Fallback: créer le canal si inexistant (ne devrait pas arriver)
         _logger.warning(f"⚠️ Channel missing for connection {connection.name}, creating it now")
-        channel = self.env['discuss.channel'].create({
-            'name': f"{connection.name}",
-            'description': f"Inter-instance communication with {connection.name}",
-            'channel_type': 'ochat',
-            'ochat_connection_id': connection.id,
-        })
-
+        # Utiliser la méthode qui cherche d'abord un channel existant
+        channel = connection._find_or_create_ochat_channel()
         connection.channel_id = channel.id
-        _logger.info(f"✅ Created O'Chat channel for connection {connection.name}")
 
         return channel
 

@@ -228,11 +228,9 @@ class OchatActionsWizard(models.TransientModel):
                             'is_incoming': is_incoming,
                             'request_message': conn_data.get('request_message', ''),
                             'rejection_reason': conn_data.get('rejection_reason', ''),
+                            'ochat_remote_name': conn_data['source_name'],
+                            'channel_id': False,
                         }
-
-                        # Set remote name for incoming, or use partner for outgoing
-                        if is_incoming:
-                            create_vals['ochat_remote_name'] = conn_data['source_name']
 
                         self.env['ochat.connection'].create(create_vals)
                         stats['created'] += 1

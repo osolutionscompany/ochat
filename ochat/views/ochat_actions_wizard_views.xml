@@ -44,7 +44,7 @@
 
     <!-- Menu item under O'Chat Configuration -->
     <menuitem id="menu_ochat_actions"
-              name="O'Chat Actions"
+              name="Actions"
               parent="menu_ochat_configuration"
               action="action_ochat_actions_wizard"
               sequence="8"
