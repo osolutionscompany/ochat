@@ -112,12 +112,29 @@ class OchatActionsWizard(models.TransientModel):
                 received_requests = response.json()
 
                 for req in received_requests:
-                    # Check if we already have this request
+                    # Check if we already have this request by request_id
                     existing = self.env['ochat.connection'].search([
                         ('request_id', '=', req['request_id'])
                     ], limit=1)
 
+                    # If not found by request_id, check by remote_instance_uuid
                     if not existing:
+                        existing = self.env['ochat.connection'].search([
+                            ('remote_instance_uuid', '=', req['source_uuid'])
+                        ], limit=1)
+
+                    if existing:
+                        # Update existing connection with the new request data
+                        existing.write({
+                            'request_id': req['request_id'],
+                            'status': 'pending',
+                            'is_incoming': True,
+                            'request_message': req.get('request_message', ''),
+                            'ochat_remote_name': req['source_name'],
+                        })
+                        stats['new_incoming'] += 1
+                        _logger.info(f"📝 Updated existing connection with incoming request from {req['source_name']}")
+                    else:
                         # NEW incoming request, create local connection
                         self.env['ochat.connection'].create({
                             'ochat_remote_name': req['source_name'],
@@ -198,23 +215,35 @@ class OchatActionsWizard(models.TransientModel):
                 for conn_data in all_connections:
                     # Determine if this is an incoming or outgoing connection
                     is_incoming = conn_data['target_uuid'] == config['instance_uuid']
+                    remote_uuid = conn_data['source_uuid'] if is_incoming else conn_data['target_uuid']
 
-                    # Check if connection already exists
+                    # Check if connection already exists by request_id
                     existing = self.env['ochat.connection'].search([
                         ('request_id', '=', conn_data['request_id'])
                     ], limit=1)
 
+                    # If not found by request_id, check by remote_instance_uuid
+                    # This handles the case where a connection was created manually or from another sync
+                    if not existing:
+                        existing = self.env['ochat.connection'].search([
+                            ('remote_instance_uuid', '=', remote_uuid)
+                        ], limit=1)
+
                     if existing:
-                        # Update existing connection
+                        # Update existing connection (sync the server data)
                         update_vals = {
+                            'request_id': conn_data['request_id'],  # Update request_id if it was found by UUID
                             'status': conn_data['status'],
                             'rejection_reason': conn_data.get('rejection_reason', ''),
                             'request_message': conn_data.get('request_message', ''),
+                            'is_incoming': is_incoming,  # Update direction in case it changed
                         }
 
                         # Update remote name if incoming and not set
                         if is_incoming and not existing.ochat_remote_name:
                             update_vals['ochat_remote_name'] = conn_data['source_name']
+                        elif not is_incoming:
+                            update_vals['ochat_remote_name'] = conn_data['target_name']
 
                         existing.write(update_vals)
                         stats['updated'] += 1
@@ -223,7 +252,7 @@ class OchatActionsWizard(models.TransientModel):
                         # Create new connection
                         create_vals = {
                             'request_id': conn_data['request_id'],
-                            'remote_instance_uuid': conn_data['source_uuid'] if is_incoming else conn_data['target_uuid'],
+                            'remote_instance_uuid': remote_uuid,
                             'status': conn_data['status'],
                             'is_incoming': is_incoming,
                             'request_message': conn_data.get('request_message', ''),
