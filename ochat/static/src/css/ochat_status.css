@@ -1,22 +1,11 @@
 /* Styles pour les indicateurs de statut de livraison O'Chat */
-.o-mail-Message-textContent {
-    position:relative;
-}
 
 .o-mail-OchatStatusContainer {
-    font-size: 0.65rem;
-    right: 2px;
-    bottom: -2px;
-}
-
-/* En ChatWindow avec message self-authored (bulle à droite), icône à gauche */
-.o-mail-ChatWindow .o-mail-Message.o-selfAuthored .o-mail-OchatStatusContainer {
-    right: auto;
-    left: 2px;
+    font-size: 0.75rem;
 }
 
 .o-mail-OchatStatusContainer i {
-    line-height: 1.5;
+    line-height: 1;
     transition: color 0.3s ease;
 }
 
@@ -25,22 +14,7 @@
     opacity: 0.7;
 }
 
-/* Cas des pièces jointes seules - indicateur sur l'AttachmentList */
-.o-mail-AttachmentList {
-    position: relative;
-}
-
-.o-mail-OchatStatusContainer.o-attachment {
-    right: 10px;
-    bottom: 10px;
-    background: rgba(255, 255, 255, 0.85);
-    border-radius: 3px;
-    padding: 2px 5px;
-    font-size: 0.75rem;
-}
-
-/* Pièces jointes - aligné à droite (ChatWindow selfAuthored) - garder à droite */
-.o-mail-OchatStatusContainer.o-attachment.o-aligned-right {
-    right: 10px;
-    left: auto;
+/* Style pour la catégorie O'Chat dans la sidebar */
+.o-mail-DiscussSidebarCategory-ochat {
+    /* Styles spécifiques pour la catégorie O'Chat si nécessaire */
 }

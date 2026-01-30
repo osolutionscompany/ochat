@@ -101,6 +101,7 @@
                                    placeholder="UUID of the remote instance"
                                    required="1"
                                    readonly="status not in ['draft','not_found']"/>
+                            <field name="is_incoming" invisible="1"/>
                         </group>
                         <group>
                             <field name="channel_id" readonly="1"

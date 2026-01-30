@@ -11,6 +11,7 @@
     'assets': {
         'web.assets_backend': [
             'ochat_helpdesk/static/src/core/common/channel_commands_patch.js',
+            'ochat_helpdesk/static/src/core/common/thread_service_patch.js',
         ],
     },
     'installable': True,

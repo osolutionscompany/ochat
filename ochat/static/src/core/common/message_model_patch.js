@@ -1,13 +1,13 @@
-/** @odoo-module **/
+/* @odoo-module */
 
-import { Message } from "@mail/core/common/message_model";
+import { Message as MessageModel } from "@mail/core/common/message_model";
+import { Message as MessageComponent } from "@mail/core/common/message";
 import { patch } from "@web/core/utils/patch";
 
 /**
  * Patch du modèle Message pour ajouter les champs de statut O'Chat
- * et désactiver certaines fonctionnalités sur les channels O'Chat
  */
-patch(Message.prototype, {
+patch(MessageModel.prototype, {
     ochat_fastapi_message_id: undefined,
     ochat_delivery_status: undefined,
     ochat_retry_count: undefined,
@@ -20,31 +20,36 @@ patch(Message.prototype, {
      * @override
      */
     get editable() {
-        if (this.thread?.channel_type === "ochat") {
+        if (this.originThread?.type === "ochat") {
             return false;
         }
         return super.editable;
     },
+});
 
+/**
+ * Patch du composant Message pour désactiver certaines fonctionnalités sur les channels O'Chat
+ */
+patch(MessageComponent.prototype, {
     /**
      * Disable reply for O'Chat channels
      * @override
      */
-    canReplyTo(thread) {
-        if (thread?.channel_type === "ochat") {
+    get canReplyTo() {
+        if (this.props.thread?.type === "ochat") {
             return false;
         }
-        return super.canReplyTo(thread);
+        return super.canReplyTo;
     },
 
     /**
      * Disable reactions for O'Chat channels
      * @override
      */
-    canAddReaction(thread) {
-        if (thread?.channel_type === "ochat") {
+    get canAddReaction() {
+        if (this.props.thread?.type === "ochat") {
             return false;
         }
-        return super.canAddReaction(thread);
+        return super.canAddReaction;
     },
 });

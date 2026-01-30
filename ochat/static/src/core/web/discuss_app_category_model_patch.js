@@ -1,4 +1,4 @@
-/** @odoo-module **/
+/* @odoo-module */
 
 import { patch } from "@web/core/utils/patch";
 import { DiscussAppCategory } from "@mail/core/common/discuss_app_category_model";
@@ -14,6 +14,6 @@ patch(DiscussAppCategory.prototype, {
         if (this.id === "ochat") {
             return compareDatetime(t2.lastInterestDateTime, t1.lastInterestDateTime) || t2.id - t1.id;
         }
-        return super.sortThreads(t1, t2);
+        return super.sortThreads(...arguments);
     },
 });

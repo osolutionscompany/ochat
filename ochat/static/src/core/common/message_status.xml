@@ -3,52 +3,32 @@
 
     <!-- Template réutilisable pour l'icône de statut O'Chat -->
     <t t-name="ochat.StatusIndicator">
-        <t t-if="message.ochat_fastapi_message_id and message.ochat_delivery_status">
-            <div class="o-mail-OchatStatusContainer position-absolute">
+        <t t-if="props.message.ochat_fastapi_message_id and props.message.ochat_delivery_status">
+            <span class="o-mail-OchatStatusContainer ms-1">
                 <!-- Status: Pending -->
-                <t t-if="message.ochat_delivery_status == 'pending'">
+                <t t-if="props.message.ochat_delivery_status == 'pending'">
                     <i class="fa fa-clock-o text-muted" title="En attente d'envoi"/>
                 </t>
 
                 <!-- Status: Delivered -->
-                <t t-elif="message.ochat_delivery_status == 'delivered'">
+                <t t-elif="props.message.ochat_delivery_status == 'delivered'">
                     <i class="fa fa-check text-success" title="Délivré"/>
                 </t>
 
                 <!-- Status: Failed -->
-                <t t-elif="message.ochat_delivery_status == 'failed'">
+                <t t-elif="props.message.ochat_delivery_status == 'failed'">
                     <i class="fa fa-times-circle text-danger"
-                       t-attf-title="Échec après {{message.ochat_retry_count}} tentatives"/>
+                       t-attf-title="Échec après {{props.message.ochat_retry_count}} tentatives"/>
                 </t>
-            </div>
+            </span>
         </t>
     </t>
 
     <!-- Patch pour afficher l'icône de statut sur les messages O'Chat -->
-    <t t-name="mail.Message" t-inherit="mail.Message" t-inherit-mode="extension">
-        <!-- Cas 1: Message avec contenu texte - après le MessageSeenIndicator -->
-        <xpath expr="//div[hasclass('o-mail-Message-seenContainer')]" position="after">
+    <t t-name="ochat.Message" t-inherit="mail.Message" t-inherit-mode="extension">
+        <!-- Ajouter l'indicateur de statut après le MessageSeenIndicator dans le header -->
+        <xpath expr="//div[hasclass('o-mail-Message-header')]//MessageSeenIndicator" position="after">
             <t t-call="ochat.StatusIndicator"/>
-        </xpath>
-    </t>
-
-    <!-- Patch pour l'AttachmentList - ajouter l'indicateur sur les images -->
-    <t t-name="mail.AttachmentList" t-inherit="mail.AttachmentList" t-inherit-mode="extension">
-        <xpath expr="//div[hasclass('o-mail-AttachmentList')]" position="inside">
-            <!-- Afficher seulement si pas de contenu texte (pièce jointe seule) -->
-            <t t-if="env.message and env.message.ochat_fastapi_message_id and env.message.ochat_delivery_status and !env.message.hasTextContent">
-                <div class="o-mail-OchatStatusContainer o-attachment position-absolute" t-att-class="{ 'o-aligned-right': env.alignedRight }">
-                    <t t-if="env.message.ochat_delivery_status == 'pending'">
-                        <i class="fa fa-clock-o" title="En attente d'envoi"/>
-                    </t>
-                    <t t-elif="env.message.ochat_delivery_status == 'delivered'">
-                        <i class="fa fa-check text-success" title="Délivré"/>
-                    </t>
-                    <t t-elif="env.message.ochat_delivery_status == 'failed'">
-                        <i class="fa fa-times-circle text-danger" title="Échec"/>
-                    </t>
-                </div>
-            </t>
         </xpath>
     </t>
 

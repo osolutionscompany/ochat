@@ -31,6 +31,10 @@ class ResConfigSettings(models.TransientModel):
         config_parameter='ochat.is_registered',
         readonly=True,
     )
+    ochat_tokens_key = fields.Char(
+        string="O'tokens Key",
+        config_parameter='ochat.tokens_key',
+    )
 
     @api.model
     def get_values(self):
