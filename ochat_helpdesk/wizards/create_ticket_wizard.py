@@ -106,7 +106,8 @@ class CreateTicketWizard(models.TransientModel):
         if hasattr(ticket, 'get_portal_url'):
             # Portal module is installed - include link with access token
             ticket._portal_ensure_token()
-            ticket_url = ticket.get_portal_url()
+            base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+            ticket_url = base_url + ticket.get_portal_url()
             message_body = Markup(
                 'A support ticket has been created: '
                 '<a href="%s">%s</a>'

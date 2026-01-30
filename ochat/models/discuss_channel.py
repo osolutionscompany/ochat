@@ -59,7 +59,7 @@ class DiscussChannel(models.Model):
             # Ensuite l'envoyer via O'Chat avec les attachments
             try:
                 self._send_ochat_message(
-                    content=html2plaintext(kwargs.get('body', '')),
+                    content=kwargs.get('body', ''),
                     message=message
                 )
             except Exception as e:

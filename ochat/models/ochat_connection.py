@@ -37,7 +37,8 @@ class OchatConnection(models.Model):
     request_id = fields.Integer(string='Request ID', readonly=True, help='Connection request ID on central server')
     request_message = fields.Text(string='Request Message', help='Optional message when sending connection request')
     rejection_reason = fields.Text(string='Rejection Reason', readonly=True, help='Reason for rejection if refused')
-    is_incoming = fields.Boolean(string='Is Incoming', default=False, readonly=True, help='True if this is a received connection request')
+    is_incoming = fields.Boolean(string='Is Incoming', default=False, readonly=True,
+                                 help='True if this is a received connection request')
     incoming_label = fields.Char(string='Type', compute='_compute_incoming_label', store=False)
 
     channel_id = fields.Many2one('discuss.channel', string='Discussion Channel')
@@ -146,7 +147,8 @@ class OchatConnection(models.Model):
         ], limit=1)
 
         if existing_channel:
-            _logger.info(f"♻️ Réutilisation du channel existant {existing_channel.name} (ID: {existing_channel.id}) pour {self.remote_instance_uuid}")
+            _logger.info(
+                f"♻️ Réutilisation du channel existant {existing_channel.name} (ID: {existing_channel.id}) pour {self.remote_instance_uuid}")
             # Reconnecter le channel à cette connexion si ce n'est pas déjà le cas
             if existing_channel.ochat_connection_id != self:
                 existing_channel.ochat_connection_id = self.id
@@ -513,13 +515,7 @@ class OchatConnection(models.Model):
                     _logger.info(f"✅ Connection status updated: {old_status} → {data['status']}")
                     return {
                         'type': 'ir.actions.client',
-                        'tag': 'display_notification',
-                        'params': {
-                            'title': _('Updated'),
-                            'message': _('Status updated to: %s', data['status']),
-                            'type': 'success',
-                            'sticky': False,
-                        }
+                        'tag': 'reload',
                     }
                 else:
                     return {
