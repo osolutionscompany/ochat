@@ -1,6 +1,7 @@
 import logging
 import json
 
+from markupsafe import Markup
 from odoo import http
 from odoo.http import request
 from odoo.addons.ochat.models.crypto_helper import decrypt_message_hybrid
@@ -143,7 +144,7 @@ class OchatWebhook(http.Controller):
             # Poster le message dans le channel
             # IMPORTANT: ochat_incoming=True pour éviter la boucle infinie
             message = channel.message_post(
-                body=content or '',  # Permettre messages vides avec attachments
+                body=Markup(content) if content else '',  # Markup pour interpréter le HTML
                 message_type='comment',
                 subtype_xmlid='mail.mt_comment',
                 author_id=author_id,  # Utiliser le partner de la connection comme auteur

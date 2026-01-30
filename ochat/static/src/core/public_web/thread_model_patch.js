@@ -9,4 +9,11 @@ patch(Thread.prototype, {
             ? this.store.discuss.ochat
             : super._computeDiscussAppCategory();
     },
+
+    get avatarUrl() {
+        if (this.channel_type === "ochat" && this.correspondent) {
+            return this.correspondent.persona.avatarUrl;
+        }
+        return super.avatarUrl;
+    },
 });
