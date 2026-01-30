@@ -2,6 +2,8 @@
 """
 Wizard to create a helpdesk ticket from O'Chat conversation
 """
+from markupsafe import Markup, escape
+
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 
@@ -89,10 +91,6 @@ class CreateTicketWizard(models.TransientModel):
         """Create the helpdesk ticket"""
         self.ensure_one()
 
-        # Check if helpdesk is installed
-        if 'helpdesk.ticket' not in self.env:
-            raise UserError(_('Helpdesk module is not installed'))
-
         # Create the ticket
         ticket = self.env['helpdesk.ticket'].create({
             'name': self.name,
@@ -103,6 +101,27 @@ class CreateTicketWizard(models.TransientModel):
             'tag_ids': [(6, 0, self.tag_ids.ids)],
             'priority': self.priority,
         })
+
+        # Build message body with or without portal link
+        if hasattr(ticket, 'get_portal_url'):
+            # Portal module is installed - include link with access token
+            ticket._portal_ensure_token()
+            base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+            ticket_url = base_url + ticket.get_portal_url()
+            message_body = Markup(
+                'A support ticket has been created: '
+                '<a href="%s">%s</a>'
+            ) % (ticket_url, escape(ticket.name))
+        else:
+            # Portal module not installed - just mention ticket name
+            message_body = 'A support ticket has been created: %s' % ticket.name
+
+        # Send message to the O'Chat channel
+        self.channel_id.message_post(
+            body=message_body,
+            message_type='comment',
+            subtype_xmlid='mail.mt_comment',
+        )
 
         # Return action to open the created ticket
         return {

@@ -25,17 +25,22 @@ class DiscussChannel(models.Model):
         string="O'Chat Connection",
         index='btree_not_null'
     )
+    ochat_remote_instance_uuid = fields.Char(
+        string="Remote Instance UUID",
+        help="UUID of the remote instance. Used to find existing channels when recreating a connection.",
+        index=True
+    )
 
-    @api.constrains('channel_type', 'ochat_connection_id')
+    @api.constrains('channel_type', 'ochat_remote_instance_uuid')
     def _check_ochat_connection(self):
-        """Ensure O'Chat channels have a connection"""
-        missing_connection = self.filtered(
-            lambda channel: channel.channel_type == 'ochat' and not channel.ochat_connection_id
+        """Ensure O'Chat channels have a remote instance UUID"""
+        missing_uuid = self.filtered(
+            lambda channel: channel.channel_type == 'ochat' and not channel.ochat_remote_instance_uuid
         )
-        if missing_connection:
+        if missing_uuid:
             raise ValidationError(
-                _("An O'Chat connection is required for O'Chat channels %(channel_names)s",
-                  channel_names=', '.join(missing_connection.mapped('name')))
+                _("A remote instance UUID is required for O'Chat channels %(channel_names)s",
+                  channel_names=', '.join(missing_uuid.mapped('name')))
             )
 
     def message_post(self, **kwargs):
@@ -54,7 +59,7 @@ class DiscussChannel(models.Model):
             # Ensuite l'envoyer via O'Chat avec les attachments
             try:
                 self._send_ochat_message(
-                    content=html2plaintext(kwargs.get('body', '')),
+                    content=kwargs.get('body', ''),
                     message=message
                 )
             except Exception as e:
@@ -88,7 +93,20 @@ class DiscussChannel(models.Model):
         # Préparer les pièces jointes si présentes
         attachments = []
         if message and message.attachment_ids:
+            max_size_mb = 100
+            max_size_bytes = max_size_mb * 1024 * 1024
+
             for attachment in message.attachment_ids:
+                # Vérifier la taille du fichier (file_size est en bytes)
+                if attachment.file_size and attachment.file_size > max_size_bytes:
+                    size_mb = attachment.file_size / (1024 * 1024)
+                    raise UserError(
+                        _("Cannot send file '%(filename)s': file size (%(size).1f MB) exceeds the maximum allowed size of %(max)d MB.",
+                          filename=attachment.name,
+                          size=size_mb,
+                          max=max_size_mb)
+                    )
+
                 # En Odoo, attachment.datas est déjà en base64 (string)
                 # Il faut juste s'assurer que c'est bien une string
                 datas_b64 = attachment.datas
@@ -216,7 +234,6 @@ class DiscussChannel(models.Model):
                 "• <b>/help</b>: Show this help message<br/>"
                 "• <b>/leave</b>: Leave this conversation<br/>"
                 "• <b>/status</b>: Show connection status and encryption info<br/>"
-                "• <b>/ticket</b>: Create a helpdesk ticket from this conversation<br/>"
                 "• <b>/who</b>: List members in this conversation"
             ))
             self.env.user._bus_send_transient_message(self, msg)
@@ -262,23 +279,3 @@ class DiscussChannel(models.Model):
 
         # Send as transient message (not saved)
         self.env.user._bus_send_transient_message(self, msg)
-
-    def execute_command_ticket(self, **kwargs):
-        """Custom O'Chat command: /ticket - Create a helpdesk ticket from conversation"""
-        self.ensure_one()
-
-        if self.channel_type != 'ochat':
-            return
-
-        # Return action to open the create ticket wizard
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Create Ticket from O\'Chat'),
-            'res_model': 'ochat.create.ticket.wizard',
-            'view_mode': 'form',
-            'views': [(False, 'form')],
-            'target': 'new',
-            'context': {
-                'default_channel_id': self.id,
-            },
-        }
