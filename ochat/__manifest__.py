@@ -3,7 +3,7 @@
     'version': '1.1',
     'category': 'Discuss',
     'summary': 'Inter-instance communication for Odoo',
-    'depends': ['base', 'mail', 'helpdesk'],
+    'depends': ['base', 'mail'],
     'external_dependencies': {
         'python': ['pycryptodome']
     },
@@ -12,7 +12,6 @@
         'data/ir_cron.xml',
         'views/res_config_settings_views.xml',
         'views/ochat_views.xml',
-        'views/create_ticket_wizard_views.xml',
         'views/send_bulk_message_wizard_views.xml',
         'views/ochat_actions_wizard_views.xml',
     ],

@@ -5,6 +5,7 @@ import { patch } from "@web/core/utils/patch";
 
 /**
  * Patch du modèle Message pour ajouter les champs de statut O'Chat
+ * et désactiver certaines fonctionnalités sur les channels O'Chat
  */
 patch(Message.prototype, {
     ochat_fastapi_message_id: undefined,
@@ -13,4 +14,37 @@ patch(Message.prototype, {
     ochat_failed_reason: undefined,
     ochat_delivered_at: undefined,
     ochat_read_at: undefined,
+
+    /**
+     * Disable message editing for O'Chat channels
+     * @override
+     */
+    get editable() {
+        if (this.thread?.channel_type === "ochat") {
+            return false;
+        }
+        return super.editable;
+    },
+
+    /**
+     * Disable reply for O'Chat channels
+     * @override
+     */
+    canReplyTo(thread) {
+        if (thread?.channel_type === "ochat") {
+            return false;
+        }
+        return super.canReplyTo(thread);
+    },
+
+    /**
+     * Disable reactions for O'Chat channels
+     * @override
+     */
+    canAddReaction(thread) {
+        if (thread?.channel_type === "ochat") {
+            return false;
+        }
+        return super.canAddReaction(thread);
+    },
 });

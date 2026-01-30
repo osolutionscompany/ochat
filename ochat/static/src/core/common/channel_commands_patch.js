@@ -14,13 +14,6 @@ commandRegistry.add("status", {
     methodName: "execute_command_status",
 });
 
-// Add /ticket command for O'Chat channels
-commandRegistry.add("ticket", {
-    channel_types: ["ochat"],
-    help: _t("Create a helpdesk ticket from this conversation"),
-    methodName: "execute_command_ticket",
-});
-
 // Extend /who command to support O'Chat channels
 const whoCommand = commandRegistry.get("who");
 if (whoCommand) {

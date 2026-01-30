@@ -234,7 +234,6 @@ class DiscussChannel(models.Model):
                 "• <b>/help</b>: Show this help message<br/>"
                 "• <b>/leave</b>: Leave this conversation<br/>"
                 "• <b>/status</b>: Show connection status and encryption info<br/>"
-                "• <b>/ticket</b>: Create a helpdesk ticket from this conversation<br/>"
                 "• <b>/who</b>: List members in this conversation"
             ))
             self.env.user._bus_send_transient_message(self, msg)
@@ -280,23 +279,3 @@ class DiscussChannel(models.Model):
 
         # Send as transient message (not saved)
         self.env.user._bus_send_transient_message(self, msg)
-
-    def execute_command_ticket(self, **kwargs):
-        """Custom O'Chat command: /ticket - Create a helpdesk ticket from conversation"""
-        self.ensure_one()
-
-        if self.channel_type != 'ochat':
-            return
-
-        # Return action to open the create ticket wizard
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Create Ticket from O\'Chat'),
-            'res_model': 'ochat.create.ticket.wizard',
-            'view_mode': 'form',
-            'views': [(False, 'form')],
-            'target': 'new',
-            'context': {
-                'default_channel_id': self.id,
-            },
-        }
