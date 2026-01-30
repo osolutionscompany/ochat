@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- O'Chat Actions Wizard Form View -->
+    <record id="view_ochat_actions_wizard_form" model="ir.ui.view">
+        <field name="name">ochat.actions.wizard.form</field>
+        <field name="model">ochat.actions.wizard</field>
+        <field name="arch" type="xml">
+            <form string="O'Chat Actions">
+                <sheet>
+                    <group>
+                        <field name="action_type" widget="radio" options="{'horizontal': true}"/>
+                    </group>
+
+                    <group>
+                        <field name="action_description" nolabel="1"
+                               invisible="action_type == False"/>
+                    </group>
+
+                    <notebook invisible="result_message == False">
+                        <page string="Results" name="results">
+                            <field name="result_message" nolabel="1" readonly="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <footer>
+                    <button name="action_execute"
+                            string="Execute"
+                            type="object"
+                            class="btn-primary"
+                            invisible="action_type == False"/>
+                    <button string="Close" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action to open the wizard -->
+    <record id="action_ochat_actions_wizard" model="ir.actions.act_window">
+        <field name="name">O'Chat Actions</field>
+        <field name="res_model">ochat.actions.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- Menu item under O'Chat Configuration -->
+    <menuitem id="menu_ochat_actions"
+              name="Actions"
+              parent="menu_ochat_configuration"
+              action="action_ochat_actions_wizard"
+              sequence="8"
+              groups="base.group_system"/>
+</odoo>
