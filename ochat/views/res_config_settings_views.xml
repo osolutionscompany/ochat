@@ -29,7 +29,7 @@
                         <setting id="ochat_otokens_key_settings"
                                  string="O'tokens Key"
                                  help="API key for O'tokens service">
-                            <field name="o_tokens_key"
+                            <field name="otokens_key"
                                    placeholder="Enter your O'tokens API key"
                                    class="o_light_label mt8"/>
                         </setting>
