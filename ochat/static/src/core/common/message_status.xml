@@ -1,27 +1,54 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
 
-    <!-- Patch to display status icon on O'Chat messages -->
-    <t t-inherit="mail.Message" t-inherit-mode="extension">
-        <xpath expr="//div[hasclass('o-mail-Message-textContent')]" position="inside">
-            <!-- Display status only for outgoing O'Chat messages -->
-            <div t-if="message.ochat_fastapi_message_id and message.ochat_delivery_status"
-                 class="ochat-status-indicator d-flex align-items-center mt-1">
+    <!-- Template réutilisable pour l'icône de statut O'Chat -->
+    <t t-name="ochat.StatusIndicator">
+        <t t-if="message.ochat_fastapi_message_id and message.ochat_delivery_status">
+            <div class="o-mail-OchatStatusContainer position-absolute">
                 <!-- Status: Pending -->
-                <t t-if="message.ochat_delivery_status === 'pending'">
-                    <i class="fa fa-clock-o text-muted" title="Pending"/>
+                <t t-if="message.ochat_delivery_status == 'pending'">
+                    <i class="fa fa-clock-o text-muted" title="En attente d'envoi"/>
                 </t>
 
                 <!-- Status: Delivered -->
-                <t t-elif="message.ochat_delivery_status === 'delivered'">
-                    <i class="fa fa-check text-muted" title="Delivered"/>
+                <t t-elif="message.ochat_delivery_status == 'delivered'">
+                    <i class="fa fa-check text-success" title="Délivré"/>
                 </t>
 
                 <!-- Status: Failed -->
-                <t t-elif="message.ochat_delivery_status === 'failed'">
-                    <i class="fa fa-times-circle text-danger" t-attf-title="Failed{{message.ochat_failed_reason ? ': ' + message.ochat_failed_reason : ''}}"/>
+                <t t-elif="message.ochat_delivery_status == 'failed'">
+                    <i class="fa fa-times-circle text-danger"
+                       t-attf-title="Échec après {{message.ochat_retry_count}} tentatives"/>
                 </t>
             </div>
+        </t>
+    </t>
+
+    <!-- Patch pour afficher l'icône de statut sur les messages O'Chat -->
+    <t t-name="mail.Message" t-inherit="mail.Message" t-inherit-mode="extension">
+        <!-- Cas 1: Message avec contenu texte - après le MessageSeenIndicator -->
+        <xpath expr="//div[hasclass('o-mail-Message-seenContainer')]" position="after">
+            <t t-call="ochat.StatusIndicator"/>
+        </xpath>
+    </t>
+
+    <!-- Patch pour l'AttachmentList - ajouter l'indicateur sur les images -->
+    <t t-name="mail.AttachmentList" t-inherit="mail.AttachmentList" t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('o-mail-AttachmentList')]" position="inside">
+            <!-- Afficher seulement si pas de contenu texte (pièce jointe seule) -->
+            <t t-if="env.message and env.message.ochat_fastapi_message_id and env.message.ochat_delivery_status and !env.message.hasTextContent">
+                <div class="o-mail-OchatStatusContainer o-attachment position-absolute" t-att-class="{ 'o-aligned-right': env.alignedRight }">
+                    <t t-if="env.message.ochat_delivery_status == 'pending'">
+                        <i class="fa fa-clock-o" title="En attente d'envoi"/>
+                    </t>
+                    <t t-elif="env.message.ochat_delivery_status == 'delivered'">
+                        <i class="fa fa-check text-success" title="Délivré"/>
+                    </t>
+                    <t t-elif="env.message.ochat_delivery_status == 'failed'">
+                        <i class="fa fa-times-circle text-danger" title="Échec"/>
+                    </t>
+                </div>
+            </t>
         </xpath>
     </t>
 

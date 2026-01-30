@@ -11,4 +11,11 @@ patch(Thread.prototype, {
             this._store.discuss.ochat.threads.add(this);
         }
     },
+
+    get avatarUrl() {
+        if (this.channel_type === "ochat" && this.correspondent) {
+            return this.correspondent.persona.avatarUrl;
+        }
+        return super.avatarUrl;
+    },
 });

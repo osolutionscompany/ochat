@@ -16,8 +16,8 @@ from Crypto.Util.Padding import pad, unpad
 
 _logger = logging.getLogger(__name__)
 
-# Maximum attachment size: 25 MB
-MAX_ATTACHMENT_SIZE = 25 * 1024 * 1024
+# Taille maximale des attachments: 100 MB
+MAX_ATTACHMENT_SIZE = 100 * 1024 * 1024
 
 
 def generate_rsa_keypair():
@@ -63,10 +63,10 @@ def encrypt_message_hybrid(content, attachments, recipient_public_key_pem):
             data_size = len(base64.b64decode(att.get('datas', '')))
             total_size += data_size
             if data_size > MAX_ATTACHMENT_SIZE:
-                raise ValueError(f"Attachment '{att.get('name')}' exceeds max size of 25MB")
+                raise ValueError(f"Attachment '{att.get('name')}' exceeds max size of 100MB")
 
-        if total_size > MAX_ATTACHMENT_SIZE * 5:  # Max 5 files of 25MB
-            raise ValueError(f"Total attachments size exceeds maximum (125MB)")
+        if total_size > MAX_ATTACHMENT_SIZE * 5:  # Max 5 fichiers de 100MB
+            raise ValueError(f"Total attachments size exceeds maximum (500MB)")
 
         # 1. Generate a random AES-256 key
         aes_key = get_random_bytes(32)  # 256 bits

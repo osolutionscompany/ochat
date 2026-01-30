@@ -6,13 +6,51 @@
         <field name="model">ochat.connection</field>
         <field name="arch" type="xml">
             <tree>
-                <field name="partner_id"/>
+                <field name="name"/>
+                <field name="incoming_label" widget="badge"
+                       decoration-info="incoming_label != ''"/>
                 <field name="remote_instance_uuid"/>
                 <field name="status" widget="badge"
-                       decoration-success="status == 'active'"
+                       decoration-success="status == 'accepted'"
                        decoration-warning="status == 'pending'"
-                       decoration-danger="status == 'blocked'"/>
+                       decoration-danger="status == 'rejected'"
+                       decoration-info="status == 'not_found'"
+                       decoration-muted="status == 'draft'"/>
             </tree>
+        </field>
+    </record>
+
+    <!-- Search view for Connections with filters -->
+    <record id="view_ochat_connection_search" model="ir.ui.view">
+        <field name="name">ochat.connection.search</field>
+        <field name="model">ochat.connection</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="partner_id"/>
+                <field name="remote_instance_uuid"/>
+                <filter string="Received Requests"
+                        name="filter_received_pending"
+                        domain="[('is_incoming', '=', True), ('status', '=', 'pending')]"/>
+                <filter string="Sent Requests" name="filter_sent"
+                        domain="[('is_incoming', '=', False)]"/>
+                <separator/>
+                <filter string="Draft" name="filter_draft"
+                        domain="[('status', '=', 'draft')]"/>
+                <filter string="Pending" name="filter_pending"
+                        domain="[('status', '=', 'pending')]"/>
+                <filter string="Accepted" name="filter_accepted"
+                        domain="[('status', '=', 'accepted')]"/>
+                <filter string="Rejected" name="filter_rejected"
+                        domain="[('status', '=', 'rejected')]"/>
+                <filter string="Not Found" name="filter_not_found"
+                        domain="[('status', '=', 'not_found')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_status"
+                            context="{'group_by': 'status'}"/>
+                    <filter string="Direction" name="group_direction"
+                            context="{'group_by': 'is_incoming'}"/>
+                </group>
+            </search>
         </field>
     </record>
 
@@ -23,21 +61,55 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_send_test_message"
-                            string="Send Test Message"
+                    <button name="action_send_request"
+                            string="Send Connection Request"
                             type="object"
-                            class="btn-primary"/>
+                            class="btn-primary"
+                            invisible="status != 'draft' or is_incoming == True"/>
+                    <button name="action_accept_request"
+                            string="Accept Request"
+                            type="object"
+                            class="btn-success"
+                            invisible="status != 'pending' or is_incoming == False"/>
+                    <button name="action_reject_request"
+                            string="Reject Request"
+                            type="object"
+                            class="btn-danger"
+                            invisible="status != 'pending' or is_incoming == False"/>
+                    <button name="action_send_request"
+                            string="Retry Request"
+                            type="object"
+                            class="btn-warning"
+                            invisible="status != 'not_found' or is_incoming == True"/>
+                    <button name="action_sync_connection_status"
+                            string="Sync Status"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="status not in ['pending', 'not_found']"/>
+                    <field name="status" widget="statusbar"
+                           statusbar_visible="draft,pending,accepted"/>
                 </header>
                 <sheet>
                     <group>
-                        <field name="partner_id" placeholder="Select contact partner"/>
-                        <field name="remote_instance_uuid"
-                               placeholder="UUID of the remote instance"/>
-                        <field name="status"/>
-                        <field name="channel_id" readonly="1"/>
+                        <group>
+                            <field name="ochat_remote_name"
+                                   readonly="1"
+                                   invisible="partner_id != False or is_incoming == False"/>
+                            <field name="partner_id"
+                                   placeholder="Select contact partner"/>
+                            <field name="remote_instance_uuid"
+                                   placeholder="UUID of the remote instance"
+                                   required="1"
+                                   readonly="status not in ['draft','not_found']"/>
+                        </group>
+                        <group>
+                            <field name="channel_id" readonly="1"
+                                   invisible="channel_id == False"/>
+                        </group>
                     </group>
                     <notebook>
-                        <page string="Additional Members" name="members">
+                        <page string="Members" name="members"
+                              invisible="channel_id == False">
                             <field name="partner_ids">
                                 <tree>
                                     <field name="name"/>

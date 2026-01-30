@@ -1,4 +1,0 @@
-# O'Chat Module - Python Dependencies
-
-# Cryptography library for end-to-end encryption
-pycryptodome>=3.19.0
