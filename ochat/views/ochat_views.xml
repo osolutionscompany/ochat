@@ -44,10 +44,10 @@
                         domain="[('status', '=', 'rejected')]"/>
                 <filter string="Not Found" name="filter_not_found"
                         domain="[('status', '=', 'not_found')]"/>
-                <group expand="0" string="Group By">
-                    <filter string="Status" name="group_status"
+                <group>
+                    <filter string="Status" name="group_status" domain="[]"
                             context="{'group_by': 'status'}"/>
-                    <filter string="Direction" name="group_direction"
+                    <filter string="Direction" name="group_direction" domain="[]"
                             context="{'group_by': 'is_incoming'}"/>
                 </group>
             </search>

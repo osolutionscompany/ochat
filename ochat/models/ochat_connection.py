@@ -172,8 +172,8 @@ class OchatConnection(models.Model):
             if not connection.channel_id:
                 continue
 
-            # Tous les partners à inclure : principal + additionnels (qui inclut maintenant le créateur)
-            all_partners = connection.partner_id | connection.partner_ids
+            # Tous les partners à inclure : principal + additionnels + utilisateur courant
+            all_partners = connection.partner_id | connection.partner_ids | self.env.user.partner_id
 
             # Récupérer les membres actuels du channel
             current_members = connection.channel_id.channel_member_ids

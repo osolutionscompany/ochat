@@ -19,6 +19,7 @@
         'web.assets_backend': [
             'ochat/static/src/core/public_web/discuss_app_model_patch.js',
             'ochat/static/src/core/public_web/thread_model_patch.js',
+            'ochat/static/src/core/public_web/discuss_content_patch.js',
             'ochat/static/src/core/web/discuss_app_category_model_patch.js',
             'ochat/static/src/core/common/message_model_patch.js',
             'ochat/static/src/core/common/channel_commands_patch.js',

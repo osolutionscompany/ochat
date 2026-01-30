@@ -5,8 +5,8 @@ import { fields } from "@mail/core/common/record";
 import { patch } from "@web/core/utils/patch";
 import { _t } from "@web/core/l10n/translation";
 
-patch(DiscussApp.prototype, {
-    setup(env) {
+const discussAppPatch = {
+    setup() {
         super.setup(...arguments);
         this.ochat = fields.One("DiscussAppCategory", {
             compute() {
@@ -17,7 +17,6 @@ patch(DiscussApp.prototype, {
                     id: "ochat",
                     name: _t("O'Chat"),
                     canView: false,
-                    canAdd: false,
                     sequence: 25,
                     serverStateKey: "is_discuss_sidebar_category_ochat_open",
                 };
@@ -25,4 +24,6 @@ patch(DiscussApp.prototype, {
             eager: true,
         });
     },
-});
+};
+
+patch(DiscussApp.prototype, discussAppPatch);

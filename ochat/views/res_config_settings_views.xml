@@ -25,6 +25,15 @@
                                    class="o_light_label mt8"/>
                         </setting>
                     </block>
+                    <block title="O'Tokens" id="o_tokens">
+                        <setting id="otokens_key_settings"
+                                 string="O'Tokens Key"
+                                 help="API Key for O'Tokens service">
+                            <field name="otokens_key"
+                                   placeholder="Enter your O'Tokens API key"
+                                   class="o_light_label mt8"/>
+                        </setting>
+                    </block>
                     <block title="Central Server" id="central_server">
                         <setting id="ochat_central_server_url_settings"
                                  string="Central Server URL"

@@ -1,14 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
     <t t-name="ochat.ThreadIcon" t-inherit="mail.ThreadIcon" t-inherit-mode="extension">
-        <xpath expr="//*[contains(@class, 'o-mail-ThreadIcon')]" position="inside">
-            <t t-if="props.thread.channel_type === 'ochat'">
-                <t name="ochat">
-                    <t name="ochat_static">
-                        <div class="fa fa-comments text-info" title="O'Chat" />
-                    </t>
-                </t>
-            </t>
+        <xpath expr="//div[@t-elif and contains(@class, 'oi-users')]" position="after">
+            <div t-elif="props.thread.channel_type === 'ochat'" class="fa fa-fw fa-comments text-info" t-att-class="largeClass" title="O'Chat"/>
         </xpath>
     </t>
 </templates>
