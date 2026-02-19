@@ -92,7 +92,7 @@ class DiscussChannel(models.Model):
                         "<a href='https://osolutions.app' target='_blank'>osolutions.app</a>"
                     ))
 
-                self.env.user._bus_send_transient_message(self, notification)
+                self._send_transient_message(self.env.user.partner_id, notification)
 
             return message
 

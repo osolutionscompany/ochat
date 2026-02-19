@@ -11,10 +11,9 @@
                         <field name="action_type" widget="radio" options="{'horizontal': true}"/>
                     </group>
 
-                    <group>
-                        <field name="action_description" nolabel="1"
-                               invisible="action_type == False"/>
-                    </group>
+                    <div invisible="action_type == False">
+                        <field name="action_description" nolabel="1" readonly="1"/>
+                    </div>
 
                     <notebook invisible="result_message == False">
                         <page string="Results" name="results">
