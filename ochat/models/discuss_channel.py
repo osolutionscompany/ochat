@@ -101,12 +101,18 @@ class DiscussChannel(models.Model):
                 })
 
                 # Notify the user directly in the chat (transient = not persisted)
-                self.env.user._bus_send_transient_message(
-                    self,
-                    Markup(_(
-                        "<b>Message not sent:</b> %(error)s"
-                    )) % {'error': html_escape(error_msg)}
-                )
+                notification = Markup(_(
+                    "<b>Message not sent:</b> %(error)s"
+                )) % {'error': html_escape(error_msg)}
+
+                # Add upgrade link if it's a destination limit error
+                if 'limit' in error_msg.lower() or 'destinations' in error_msg.lower():
+                    notification += Markup(_(
+                        "<br/><br/>To get unlimited connections, subscribe at "
+                        "<a href='https://osolutions.app' target='_blank'>osolutions.app</a>"
+                    ))
+
+                self.env.user._bus_send_transient_message(self, notification)
 
             return message
 
