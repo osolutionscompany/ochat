@@ -24,12 +24,16 @@ class ResConfigSettings(models.TransientModel):
     ochat_central_server_url = fields.Char(
         string='Central Server URL',
         config_parameter='ochat.central_server_url',
-        default='http://localhost:8000',
+        default='https://api.ochat.osolutions.app',
     )
     ochat_is_registered = fields.Boolean(
         string='Is Registered',
         config_parameter='ochat.is_registered',
         readonly=True,
+    )
+    otokens_key = fields.Char(
+        string="O'tokens Key",
+        config_parameter='o_tokens.key',
     )
 
     @api.model
@@ -96,10 +100,17 @@ class ResConfigSettings(models.TransientModel):
         }
 
         try:
+            # Préparer les headers - inclure l'API key existante pour le ré-enregistrement
+            headers = {'Content-Type': 'application/json'}
+            existing_api_key = ICP.get_param('ochat.api_key')
+            if existing_api_key:
+                headers['Authorization'] = f'Bearer {existing_api_key}'
+
             # Envoyer la requête d'enregistrement
             response = requests.post(
                 f"{central_server_url}/api/v1/instances/register",
                 json=data,
+                headers=headers,
                 timeout=10
             )
 
