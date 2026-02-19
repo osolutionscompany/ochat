@@ -80,8 +80,6 @@ class DiscussChannel(models.Model):
                     content=kwargs.get('body', ''),
                     message=message
                 )
-            except UserError:
-                raise  # Laisser remonter les erreurs métier à l'utilisateur
             except Exception as e:
                 _logger.error(f"❌ Failed to send O'Chat message: {str(e)}")
                 # Marquer comme failed si l'envoi échoue
@@ -90,6 +88,25 @@ class DiscussChannel(models.Model):
                     'ochat_delivery_status': 'failed',
                     'ochat_failed_reason': str(e)
                 })
+
+                # Extract user-friendly error message
+                error_msg = str(e)
+                if isinstance(e, UserError):
+                    error_msg = e.args[0] if e.args else str(e)
+
+                # Mark message as failed with reason
+                message.sudo().write({
+                    'ochat_delivery_status': 'failed',
+                    'ochat_failed_reason': error_msg[:200],
+                })
+
+                # Notify the user directly in the chat (transient = not persisted)
+                self.env.user._bus_send_transient_message(
+                    self,
+                    Markup(_(
+                        "<b>Message not sent:</b> %(error)s"
+                    )) % {'error': html_escape(error_msg)}
+                )
 
             return message
 
