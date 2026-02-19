@@ -1,9 +1,11 @@
+import hmac
 import logging
 import json
 
 from markupsafe import Markup
 from odoo import http
 from odoo.http import request
+from odoo.tools import html_sanitize
 from odoo.addons.ochat.models.crypto_helper import decrypt_message_hybrid
 
 _logger = logging.getLogger(__name__)
@@ -46,15 +48,17 @@ class OchatWebhook(http.Controller):
                 }
 
             provided_secret = authorization.replace('Bearer ', '')
-            if provided_secret != expected_secret:
+            # SEC-08: Comparaison en temps constant pour éviter les timing attacks
+            if not hmac.compare_digest(provided_secret, expected_secret):
                 _logger.error(f"❌ Invalid webhook secret")
                 return {
                     'status': 'error',
                     'message': 'Invalid webhook secret'
                 }
 
-            # Authentication successful, process message
-            data = json.loads(request.httprequest.data)
+            # Authentification réussie, traiter le message
+            # ARCH-08: Utiliser get_json_data() au lieu de json.loads() (le JSON est déjà parsé par Odoo pour type='json')
+            data = request.get_json_data()
             _logger.info(f"📨 Received authenticated message from central server")
 
             # Get message information
@@ -144,7 +148,7 @@ class OchatWebhook(http.Controller):
             # Post message to channel
             # IMPORTANT: ochat_incoming=True to avoid infinite loop
             message = channel.message_post(
-                body=Markup(content) if content else '',  # Markup pour interpréter le HTML
+                body=Markup(html_sanitize(content)) if content else '',  # SEC-06: Sanitiser le HTML avant Markup
                 message_type='comment',
                 subtype_xmlid='mail.mt_comment',
                 author_id=author_id,  # Use connection partner as author
@@ -199,7 +203,8 @@ class OchatWebhook(http.Controller):
 
             # Check token
             provided_secret = authorization.replace('Bearer ', '')
-            if provided_secret != expected_secret:
+            # SEC-08: Comparaison en temps constant pour éviter les timing attacks
+            if not hmac.compare_digest(provided_secret, expected_secret):
                 _logger.error("❌ Invalid webhook secret in status update")
                 return {
                     'status': 'error',

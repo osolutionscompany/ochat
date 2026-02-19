@@ -109,7 +109,9 @@ class OchatActionsWizard(models.TransientModel):
             )
 
             if response.status_code == 200:
-                received_requests = response.json()
+                response_data = response.json()
+                # L'API retourne un format paginé {"items": [...], "total": ...}
+                received_requests = response_data.get('items', response_data) if isinstance(response_data, dict) else response_data
 
                 for req in received_requests:
                     # Check if we already have this request by request_id
@@ -209,7 +211,9 @@ class OchatActionsWizard(models.TransientModel):
             )
 
             if response.status_code == 200:
-                all_connections = response.json()
+                response_data = response.json()
+                # L'API retourne un format paginé {"items": [...], "total": ...}
+                all_connections = response_data.get('items', response_data) if isinstance(response_data, dict) else response_data
                 _logger.info(f"📥 Fetched {len(all_connections)} connections from server")
 
                 for conn_data in all_connections:
@@ -269,7 +273,7 @@ class OchatActionsWizard(models.TransientModel):
                 try:
                     error_data = response.json()
                     error_msg = error_data.get('detail', error_msg)
-                except:
+                except (ValueError, KeyError):
                     pass
                 stats['errors'].append(f"Failed to fetch connections: {error_msg}")
                 _logger.error(f"❌ Failed to fetch all connections: {response.status_code}")

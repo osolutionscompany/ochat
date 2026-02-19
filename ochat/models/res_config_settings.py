@@ -100,10 +100,17 @@ class ResConfigSettings(models.TransientModel):
         }
 
         try:
-            # Send the registration request
+            # Préparer les headers - inclure l'API key existante pour le ré-enregistrement
+            headers = {'Content-Type': 'application/json'}
+            existing_api_key = ICP.get_param('ochat.api_key')
+            if existing_api_key:
+                headers['Authorization'] = f'Bearer {existing_api_key}'
+
+            # Envoyer la requête d'enregistrement
             response = requests.post(
                 f"{central_server_url}/api/v1/instances/register",
                 json=data,
+                headers=headers,
                 timeout=10
             )
 
