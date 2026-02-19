@@ -62,6 +62,8 @@ class DiscussChannel(models.Model):
                     content=kwargs.get('body', ''),
                     message=message
                 )
+            except UserError:
+                raise  # Laisser remonter les erreurs métier à l'utilisateur
             except Exception as e:
                 _logger.error(f"❌ Failed to send O'Chat message: {str(e)}")
                 # Le message reste visible localement même si l'envoi échoue
@@ -168,7 +170,7 @@ class DiscussChannel(models.Model):
                 error_data = response.json()
                 if 'detail' in error_data:
                     error_message = error_data['detail']
-            except:
+            except (ValueError, KeyError):
                 pass
 
             _logger.error(f"❌ Failed to send message: {response.status_code} - {response.text}")
