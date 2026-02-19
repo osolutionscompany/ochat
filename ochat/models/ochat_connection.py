@@ -286,7 +286,7 @@ class OchatConnection(models.Model):
                     error_data = response.json()
                     if 'detail' in error_data:
                         error_message = error_data['detail']
-                except:
+                except (ValueError, KeyError):
                     error_message = response.text or error_message
 
                 _logger.error(f"❌ Failed to send message: {response.status_code} - {response.text}")
@@ -352,7 +352,7 @@ class OchatConnection(models.Model):
                     error_data = response.json()
                     if 'detail' in error_data:
                         error_message = error_data['detail']
-                except:
+                except (ValueError, KeyError):
                     error_message = response.text or error_message
 
                 _logger.error(f"❌ Failed to send connection request: {response.status_code} - {response.text}")
@@ -407,7 +407,7 @@ class OchatConnection(models.Model):
                     error_data = response.json()
                     if 'detail' in error_data:
                         error_message = error_data['detail']
-                except:
+                except (ValueError, KeyError):
                     error_message = response.text or error_message
 
                 _logger.error(f"❌ Failed to accept request: {response.status_code} - {response.text}")
@@ -465,7 +465,7 @@ class OchatConnection(models.Model):
                     error_data = response.json()
                     if 'detail' in error_data:
                         error_message = error_data['detail']
-                except:
+                except (ValueError, KeyError):
                     error_message = response.text or error_message
 
                 _logger.error(f"❌ Failed to reject request: {response.status_code} - {response.text}")
@@ -534,7 +534,7 @@ class OchatConnection(models.Model):
                     error_data = response.json()
                     if 'detail' in error_data:
                         error_message = error_data['detail']
-                except:
+                except (ValueError, KeyError):
                     error_message = response.text or error_message
 
                 _logger.error(f"❌ Failed to sync status: {response.status_code} - {response.text}")
@@ -576,7 +576,9 @@ class OchatConnection(models.Model):
             )
 
             if response.status_code == 200:
-                received_requests = response.json()
+                response_data = response.json()
+                # L'API retourne un format paginé {"items": [...], "total": ...}
+                received_requests = response_data.get('items', response_data) if isinstance(response_data, dict) else response_data
 
                 for req in received_requests:
                     # Vérifier si on a déjà cette demande
