@@ -39,7 +39,7 @@
                                  string="Central Server URL"
                                  help="URL of the central O'Chat server that coordinates communication between instances">
                             <field name="ochat_central_server_url"
-                                   placeholder="http://localhost:8000"
+                                   placeholder="https://api.ochat.osolutions.app"
                                    class="o_light_label mt8"/>
                         </setting>
                         <setting id="ochat_registration_settings"
