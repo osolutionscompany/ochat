@@ -50,7 +50,7 @@ class ResConfigSettings(models.TransientModel):
         res.update(
             ochat_instance_uuid=instance_uuid,
             ochat_instance_name=ICP.get_param('ochat.instance_name', ''),
-            ochat_central_server_url=ICP.get_param('ochat.central_server_url', 'http://localhost:8000'),
+            ochat_central_server_url=ICP.get_param('ochat.central_server_url', 'https://api.ochat.osolutions.app'),
             ochat_is_registered=ICP.get_param('ochat.is_registered', 'False') == 'True',
         )
         return res
@@ -60,7 +60,7 @@ class ResConfigSettings(models.TransientModel):
         ICP = self.env['ir.config_parameter'].sudo()
 
         ICP.set_param('ochat.instance_name', self.ochat_instance_name or '')
-        ICP.set_param('ochat.central_server_url', self.ochat_central_server_url or 'http://localhost:8000')
+        ICP.set_param('ochat.central_server_url', self.ochat_central_server_url or 'https://api.ochat.osolutions.app')
 
     def action_ochat_register(self):
         """Enregistre cette instance auprès du serveur central"""
