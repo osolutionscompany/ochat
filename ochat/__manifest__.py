@@ -4,6 +4,8 @@
     'category': 'Discuss',
     'summary': 'Inter-instance communication for Odoo',
     'depends': ['base', 'mail'],
+    'author': 'O\'Solutions Company',
+    'website': 'https://www.osolutions.app',
     'external_dependencies': {
         'python': ['pycryptodome']
     },
@@ -31,5 +33,5 @@
     },
     'installable': True,
     'application': True,
-    'license': 'LGPL-3',
+    'license': 'Other proprietary',
 }

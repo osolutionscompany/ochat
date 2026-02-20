@@ -4,6 +4,8 @@
     'category': 'Discuss',
     'summary': 'Create helpdesk tickets from O\'Chat conversations',
     'depends': ['ochat', 'helpdesk'],
+    'author': 'O\'Solutions Company',
+    'website': 'https://osolutions.app',
     'data': [
         'security/ir.model.access.csv',
         'views/create_ticket_wizard_views.xml',
@@ -15,5 +17,5 @@
     },
     'installable': True,
     'auto_install': True,
-    'license': 'LGPL-3',
+    'license': 'Other proprietary',
 }
