@@ -48,7 +48,6 @@ class OchatConnection(models.Model):
         'connection_id',
         'partner_id',
         string='Additional Members',
-        default=lambda self: [self.env.user.partner_id.id]
     )
 
     @api.depends('partner_id', 'partner_id.name', 'ochat_remote_name')
