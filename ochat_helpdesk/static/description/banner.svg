@@ -1,120 +1,168 @@
 <svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background gradient -->
   <defs>
+    <!-- Dark background gradient matching website -->
     <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#1e40af;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="0%" stop-color="#0A0A0F"/>
+      <stop offset="50%" stop-color="#0F0D1A"/>
+      <stop offset="100%" stop-color="#0A0A0F"/>
     </linearGradient>
 
-    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#60a5fa;stop-opacity:0.3" />
-      <stop offset="50%" style="stop-color:#93c5fd;stop-opacity:0.5" />
-      <stop offset="100%" style="stop-color:#60a5fa;stop-opacity:0.3" />
+    <!-- O'Chat purple accent gradient -->
+    <linearGradient id="purpleGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6B47D6"/>
+      <stop offset="100%" stop-color="#4F2FB3"/>
     </linearGradient>
 
-    <!-- Filter for shadow -->
-    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
-      <feOffset dx="0" dy="2" result="offsetblur"/>
+    <!-- Mesh gradient glow -->
+    <radialGradient id="meshGlow1" cx="30%" cy="40%" r="40%">
+      <stop offset="0%" stop-color="#6B47D6" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#6B47D6" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="meshGlow2" cx="75%" cy="60%" r="35%">
+      <stop offset="0%" stop-color="#4F2FB3" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#4F2FB3" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="meshGlow3" cx="50%" cy="20%" r="30%">
+      <stop offset="0%" stop-color="#9F9FF8" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#9F9FF8" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Badge gradient -->
+    <linearGradient id="badgeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6B47D6" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#4F2FB3" stop-opacity="0.2"/>
+    </linearGradient>
+
+    <!-- Glass effect -->
+    <filter id="glass" x="-5%" y="-5%" width="110%" height="110%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+      <feOffset dx="0" dy="1" result="offsetblur"/>
       <feComponentTransfer>
-        <feFuncA type="linear" slope="0.3"/>
+        <feFuncA type="linear" slope="0.15"/>
       </feComponentTransfer>
       <feMerge>
         <feMergeNode/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
+
+    <!-- Noise texture simulation -->
+    <filter id="noise">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.03"/>
+      </feComponentTransfer>
+      <feBlend in="SourceGraphic" mode="overlay"/>
+    </filter>
   </defs>
 
-  <!-- Background -->
+  <!-- Dark background -->
   <rect width="1200" height="630" fill="url(#bgGradient)"/>
 
-  <!-- Decorative circles -->
-  <circle cx="100" cy="100" r="150" fill="url(#accentGradient)" opacity="0.2"/>
-  <circle cx="1100" cy="530" r="200" fill="url(#accentGradient)" opacity="0.2"/>
+  <!-- Mesh gradient overlays -->
+  <rect width="1200" height="630" fill="url(#meshGlow1)"/>
+  <rect width="1200" height="630" fill="url(#meshGlow2)"/>
+  <rect width="1200" height="630" fill="url(#meshGlow3)"/>
 
-  <!-- Icon container (left side) -->
-  <g transform="translate(100, 180)">
-    <!-- Shield background -->
-    <path d="M 90 0 L 145 25 L 145 100 Q 145 150 90 175 Q 35 150 35 100 L 35 25 Z"
-          fill="#ffffff" opacity="0.15" filter="url(#shadow)"/>
+  <!-- Subtle noise texture -->
+  <rect width="1200" height="630" filter="url(#noise)" opacity="0.5"/>
 
-    <!-- Main shield -->
-    <path d="M 90 12 L 137 35 L 137 100 Q 137 143 90 165 Q 43 143 43 100 L 43 35 Z"
-          fill="#ffffff" stroke="none"/>
+  <!-- Subtle grid lines -->
+  <g opacity="0.04" stroke="#9F9FF8" stroke-width="1">
+    <line x1="200" y1="0" x2="200" y2="630"/>
+    <line x1="400" y1="0" x2="400" y2="630"/>
+    <line x1="600" y1="0" x2="600" y2="630"/>
+    <line x1="800" y1="0" x2="800" y2="630"/>
+    <line x1="1000" y1="0" x2="1000" y2="630"/>
+    <line x1="0" y1="157" x2="1200" y2="157"/>
+    <line x1="0" y1="315" x2="1200" y2="315"/>
+    <line x1="0" y1="472" x2="1200" y2="472"/>
+  </g>
 
-    <!-- Lock body -->
-    <rect x="78" y="93" width="24" height="30" rx="2" fill="#1e40af"/>
-
-    <!-- Lock shackle -->
-    <path d="M 75 93 L 75 80 Q 75 68 90 68 Q 105 68 105 80 L 105 93"
-          fill="none" stroke="#1e40af" stroke-width="3.5" stroke-linecap="round"/>
-
-    <!-- Keyhole -->
-    <circle cx="90" cy="105" r="3" fill="#ffffff"/>
-    <rect x="88" y="105" width="4" height="7" fill="#ffffff"/>
-
-    <!-- Message bubble 1 (right) -->
-    <g transform="translate(140, 30)">
-      <rect x="0" y="0" width="60" height="40" rx="8" fill="#60a5fa" opacity="0.8"/>
-      <path d="M 10 40 L 15 45 L 20 40" fill="#60a5fa" opacity="0.8"/>
-      <line x1="10" y1="15" x2="50" y2="15" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
-      <line x1="10" y1="25" x2="40" y2="25" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
-    </g>
-
-    <!-- Message bubble 2 (left) -->
-    <g transform="translate(-40, 80)">
-      <rect x="0" y="0" width="55" height="38" rx="8" fill="#93c5fd" opacity="0.8"/>
-      <path d="M 45 38 L 50 43 L 55 38" fill="#93c5fd" opacity="0.8"/>
-      <line x1="10" y1="14" x2="45" y2="14" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
-      <line x1="10" y1="24" x2="35" y2="24" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
-    </g>
+  <!-- O'Chat Logo (speech bubble shape) -->
+  <g transform="translate(100, 175) scale(0.55)">
+    <path d="M38 237.5C38 127.319 127.319 38 237.5 38C347.681 38 437 127.319 437 237.5C437 347.681 347.681 437 237.5 437H67.5545C59.7162 437 52.1989 433.886 46.6563 428.344C41.1138 422.801 38 415.284 38 407.445V237.5Z" fill="#3F2888"/>
+    <path d="M54.7865 434.112C227.525 411.882 361 264.281 361 85.5002C361 83.9232 360.991 82.3557 360.972 80.7882C325.818 53.0091 282.305 37.9301 237.5 38.0002C127.319 38.0002 38 127.319 38 237.5V407.446C38 419.197 44.859 429.343 54.7865 434.112Z" fill="#4F2FB3"/>
   </g>
 
   <!-- Main title -->
-  <text x="400" y="250" font-family="Arial, Helvetica, sans-serif" font-size="80"
-        font-weight="bold" fill="#ffffff" filter="url(#shadow)">
+  <text x="400" y="260" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="82" font-weight="800" fill="#FFFFFF" letter-spacing="-2">
     O'Chat
   </text>
 
-  <!-- Subtitle -->
-  <text x="400" y="320" font-family="Arial, Helvetica, sans-serif" font-size="36"
-        fill="#ffffff" opacity="0.95">
-    Secure Inter-Instance Communication
+  <!-- Subtitle with gradient effect -->
+  <text x="400" y="320" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="32" font-weight="500" fill="#9F9FF8" opacity="0.9">
+    Client communication, finally simple
+  </text>
+
+  <!-- Description -->
+  <text x="400" y="370" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="20" fill="#FFFFFF" opacity="0.5">
+    Secure peer-to-peer messaging between Odoo instances
   </text>
 
   <!-- Feature badges -->
-  <g transform="translate(400, 370)">
+  <g transform="translate(400, 410)">
     <!-- Badge 1: E2E Encrypted -->
-    <rect x="0" y="0" width="250" height="50" rx="25" fill="#ffffff" opacity="0.2"/>
-    <text x="25" y="33" font-family="Arial, Helvetica, sans-serif" font-size="24" fill="#ffffff">
-      🔒 E2E Encrypted
-    </text>
+    <rect x="0" y="0" width="195" height="42" rx="21" fill="url(#badgeGradient)" stroke="#6B47D6" stroke-opacity="0.3" stroke-width="1"/>
+    <text x="40" y="27" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="16" fill="#9F9FF8" font-weight="500">E2E Encrypted</text>
+    <g transform="translate(16, 12)">
+      <rect x="0" y="0" width="16" height="12" rx="2" fill="none" stroke="#9F9FF8" stroke-width="1.5"/>
+      <path d="M3 0V-3C3-6 5-8 8-8C11-8 13-6 13-3V0" fill="none" stroke="#9F9FF8" stroke-width="1.5" stroke-linecap="round"/>
+    </g>
 
     <!-- Badge 2: Real-Time -->
-    <rect x="260" y="0" width="200" height="50" rx="25" fill="#ffffff" opacity="0.2"/>
-    <text x="285" y="33" font-family="Arial, Helvetica, sans-serif" font-size="24" fill="#ffffff">
-      ⚡ Real-Time
-    </text>
+    <rect x="210" y="0" width="155" height="42" rx="21" fill="url(#badgeGradient)" stroke="#6B47D6" stroke-opacity="0.3" stroke-width="1"/>
+    <text x="246" y="27" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="16" fill="#9F9FF8" font-weight="500">Real-Time</text>
+    <g transform="translate(226, 14)">
+      <path d="M8 0L4 8H8L4 16" fill="none" stroke="#9F9FF8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
 
     <!-- Badge 3: RSA-4096 -->
-    <rect x="480" y="0" width="180" height="50" rx="25" fill="#ffffff" opacity="0.2"/>
-    <text x="495" y="33" font-family="Arial, Helvetica, sans-serif" font-size="24" fill="#ffffff">
-      🛡️ RSA-4096
+    <rect x="380" y="0" width="160" height="42" rx="21" fill="url(#badgeGradient)" stroke="#6B47D6" stroke-opacity="0.3" stroke-width="1"/>
+    <text x="416" y="27" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="16" fill="#9F9FF8" font-weight="500">RSA-4096</text>
+    <g transform="translate(396, 12)">
+      <path d="M4 0L8 4L12 0M4 6L8 10L12 6" fill="none" stroke="#9F9FF8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+
+  <!-- Version badges at bottom -->
+  <g transform="translate(400, 490)">
+    <text x="0" y="18" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="15" fill="#FFFFFF" opacity="0.3" font-weight="500">
+      Odoo 17  ·  Odoo 18  ·  Odoo 19  ·  Community &amp; Enterprise
     </text>
   </g>
 
-  <!-- Bottom tagline -->
-  <text x="400" y="520" font-family="Arial, Helvetica, sans-serif" font-size="28"
-        fill="#ffffff" opacity="0.85" font-style="italic">
-    Connect your Odoo instances securely and instantly
-  </text>
+  <!-- O'Solutions branding bottom right -->
+  <g transform="translate(940, 565)">
+    <rect x="0" y="0" width="200" height="36" rx="18" fill="#FFFFFF" fill-opacity="0.05" stroke="#FFFFFF" stroke-opacity="0.1" stroke-width="1"/>
+    <text x="100" y="24" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="14" fill="#FFFFFF" opacity="0.4" text-anchor="middle" font-weight="500">
+      by O'Solutions
+    </text>
+  </g>
 
-  <!-- Decorative connection lines -->
-  <g opacity="0.3">
-    <line x1="300" y1="250" x2="350" y2="280" stroke="#ffffff" stroke-width="2" stroke-dasharray="5,5"/>
-    <line x1="300" y1="300" x2="350" y2="320" stroke="#ffffff" stroke-width="2" stroke-dasharray="5,5"/>
-    <circle cx="350" cy="280" r="4" fill="#ffffff"/>
-    <circle cx="350" cy="320" r="4" fill="#ffffff"/>
+  <!-- Decorative floating dots -->
+  <g opacity="0.15">
+    <circle cx="950" cy="180" r="3" fill="#6B47D6"/>
+    <circle cx="1020" cy="220" r="2" fill="#9F9FF8"/>
+    <circle cx="980" cy="300" r="2.5" fill="#4F2FB3"/>
+    <circle cx="1080" cy="260" r="2" fill="#6B47D6"/>
+    <circle cx="1050" cy="340" r="3" fill="#9F9FF8"/>
+    <circle cx="920" cy="280" r="1.5" fill="#4F2FB3"/>
+    <circle cx="1100" cy="180" r="2" fill="#9F9FF8"/>
+    <circle cx="960" cy="360" r="2" fill="#6B47D6"/>
+  </g>
+
+  <!-- Connection lines (peer-to-peer visual) -->
+  <g opacity="0.08" stroke="#9F9FF8" stroke-width="1">
+    <line x1="950" y1="200" x2="1020" y2="240"/>
+    <line x1="1020" y1="240" x2="980" y2="310"/>
+    <line x1="980" y1="310" x2="1050" y2="350"/>
+    <line x1="1050" y1="350" x2="1080" y2="270"/>
+    <line x1="1080" y1="270" x2="1020" y2="240"/>
+    <line x1="950" y1="200" x2="920" y2="280"/>
+    <line x1="920" y1="280" x2="980" y2="310"/>
   </g>
 </svg>
