@@ -5,412 +5,160 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>O'Chat - Secure Peer-to-Peer Communication for Odoo Partners</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <span href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"></span>
     <style>
-        :root {
-            --ochat-400: #8B6BE6;
-            --ochat-500: #6B47D6;
-            --ochat-600: #4F2FB3;
-            --ochat-700: #3F2888;
-            --background: #0a0a0f;
-            --background-card: #12121a;
-            --background-muted: #1a1a24;
-            --border: #2a2a3a;
-            --text-primary: #f5f5f7;
-            --text-muted: #a1a1aa;
-        }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background-color: var(--background);
-            color: var(--text-primary);
+            background-color: #0a0a0f;
+            color: #f5f5f7;
             line-height: 1.6;
-        }
-
-        .text-gradient-ochat {
-            background: linear-gradient(135deg, var(--ochat-400) 0%, var(--ochat-600) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .hero-section {
-            background: linear-gradient(135deg, rgba(107,71,214,0.15) 0%, rgba(79,47,179,0.05) 100%);
-            border: 1px solid rgba(107,71,214,0.2);
-            padding: 80px 20px;
-            border-radius: 24px;
-            margin-top: 10px;
-        }
-
-        .badge-encryption {
-            font-size: 0.85rem;
-            padding: 10px 24px;
-            background-color: rgba(107,71,214,0.15);
-            border: 1px solid rgba(107,71,214,0.3);
-            border-radius: 50px;
-            display: inline-block;
-            font-weight: 500;
-            color: var(--ochat-400);
-        }
-
-        .section-dark {
-            background-color: var(--background);
-            padding: 60px 20px;
-        }
-
-        .section-muted {
-            background-color: var(--background-muted);
-            padding: 60px 30px;
-            border-radius: 24px;
-            margin-top: 10px;
-            border: 1px solid var(--border);
-        }
-
-        .card {
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            background: var(--background-card);
-            padding: 30px;
-            height: 100%;
-            transition: all 0.3s ease;
-        }
-
-        .card:hover {
-            border-color: rgba(107,71,214,0.5);
-            box-shadow: 0 10px 40px rgba(107, 71, 214, 0.1);
-        }
-
-        .feature-icon {
-            width: 56px;
-            height: 56px;
-            border-radius: 14px;
-            background: linear-gradient(135deg, rgba(107,71,214,0.2) 0%, rgba(79,47,179,0.1) 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-            font-size: 1.5rem;
-        }
-
-        .stat-box {
-            text-align: center;
-            padding: 20px;
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--ochat-400) 0%, var(--ochat-600) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .stat-label {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            margin-top: 5px;
-        }
-
-        .info-box {
-            background: linear-gradient(135deg, rgba(107,71,214,0.1) 0%, rgba(79,47,179,0.05) 100%);
-            border: 1px solid rgba(107,71,214,0.2);
-            border-radius: 16px;
-            padding: 24px;
-        }
-
-        .info-box-title {
-            color: var(--ochat-400);
-            font-weight: 600;
-        }
-
-        .warning-box {
-            background: rgba(245, 158, 11, 0.1);
-            border: 1px solid rgba(245, 158, 11, 0.2);
-            border-radius: 16px;
-            padding: 24px;
-        }
-
-        .cta-section {
-            background: linear-gradient(135deg, rgba(107,71,214,0.2) 0%, rgba(79,47,179,0.1) 100%);
-            border: 1px solid rgba(107,71,214,0.3);
-            padding: 60px 20px;
-            border-radius: 24px;
-            margin-top: 10px;
-        }
-
-        .check-list {
-            list-style: none;
-            padding: 0;
-        }
-
-        .check-list li {
-            padding: 10px 0;
-            color: var(--text-muted);
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-        }
-
-        .check-list li::before {
-            content: "✓";
-            color: var(--ochat-500);
-            font-weight: bold;
-            flex-shrink: 0;
-        }
-
-        .encryption-flow {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-        }
-
-        .encryption-step {
-            background: var(--background-card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-            flex: 1;
-            min-width: 180px;
-        }
-
-        .encryption-step strong {
-            color: var(--text-primary);
-        }
-
-        .encryption-step p {
-            color: var(--text-muted);
-            font-size: 0.85rem;
-        }
-
-        .encryption-arrow {
-            color: var(--ochat-500);
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
-
-        .logo-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 24px;
-        }
-
-        .logo-container img {
-            width: 64px;
-            height: 64px;
-        }
-
-        .command-box {
-            background: var(--background);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 12px 20px;
-            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
-            font-size: 0.95rem;
-            color: var(--ochat-400);
-        }
-
-        .step-number {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--ochat-500) 0%, var(--ochat-600) 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1.2rem;
-            margin: 0 auto 15px;
-        }
-
-        .section-title {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
-
-        .section-subtitle {
-            color: var(--text-muted);
-            max-width: 600px;
-            margin: 0 auto 40px;
-        }
-
-        h4, h5, h6 {
-            color: var(--text-primary);
-        }
-
-        .text-ochat {
-            color: var(--ochat-500);
-        }
-
-        .badge-warning {
-            background: rgba(245, 158, 11, 0.2);
-            color: #fbbf24;
-            border: 1px solid rgba(245, 158, 11, 0.3);
-            font-size: 0.75rem;
-            padding: 4px 10px;
-            border-radius: 20px;
-        }
-
-        a {
-            color: var(--ochat-500);
-            text-decoration: none;
-        }
-
-        a:hover {
-            color: var(--ochat-400);
-        }
-
-        .use-case-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .use-case-list li {
-            padding: 6px 0;
-            color: var(--text-muted);
-            font-size: 0.95rem;
-        }
-
-        .use-case-list li::before {
-            content: "•";
-            color: var(--ochat-500);
-            margin-right: 10px;
         }
     </style>
 </head>
 <body>
 
     <!-- Hero Section -->
-    <section class="hero-section text-center">
+    <section class="text-center" style="background: linear-gradient(135deg, rgba(107,71,214,0.15) 0%, rgba(79,47,179,0.05) 100%); border: 1px solid rgba(107,71,214,0.2); padding: 80px 20px; border-radius: 24px; margin-top: 10px;">
         <div class="container">
-            <div class="logo-container">
-                <img src="ochat_logo.svg" alt="O'Chat Logo">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 24px;">
+                <img src="ochat_logo.svg" alt="O'Chat Logo" style="width: 64px; height: 64px;">
             </div>
             <div class="mb-4">
-                <span class="badge-encryption">
+                <span style="font-size: 0.85rem; padding: 10px 24px; background-color: rgba(107,71,214,0.15); border: 1px solid rgba(107,71,214,0.3); border-radius: 50px; display: inline-block; font-weight: 500; color: #8B6BE6;">
                     🔒 End-to-End Encrypted
                 </span>
             </div>
-            <h1 class="mb-4" style="font-size: 2.8rem; font-weight: 800;">
-                Secure Communication<br/>Between <span class="text-gradient-ochat">Odoo Partners</span>
+            <h1 class="mb-4" style="font-size: 2.8rem; font-weight: 800; color: #f5f5f7;">
+                Secure Communication<br/>Between <span style="background: linear-gradient(135deg, #8B6BE6 0%, #4F2FB3 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Odoo Partners</span>
             </h1>
-            <p class="mb-4" style="font-size: 1.15rem; max-width: 650px; margin: 0 auto; color: var(--text-muted);">
+            <p class="mb-4" style="font-size: 1.15rem; max-width: 650px; margin: 0 auto; color: #a1a1aa;">
                 Connect directly with your clients and partners, Odoo instance to Odoo instance.
                 Send encrypted messages, share files, and create support tickets — all from within Discuss.
             </p>
             <div style="margin-top: 35px;">
-                <p style="font-size: 0.9rem; color: var(--text-muted);">
-                    <span class="text-ochat">✓</span> Peer-to-peer messaging &nbsp;&nbsp;
-                    <span class="text-ochat">•</span> &nbsp;&nbsp;
-                    <span class="text-ochat">✓</span> Military-grade encryption &nbsp;&nbsp;
-                    <span class="text-ochat">•</span> &nbsp;&nbsp;
-                    <span class="text-ochat">✓</span> Odoo 17, 18 & 19
+                <p style="font-size: 0.9rem; color: #a1a1aa;">
+                    <span style="color: #6B47D6;">✓</span> Peer-to-peer messaging &nbsp;&nbsp;
+                    <span style="color: #6B47D6;">•</span> &nbsp;&nbsp;
+                    <span style="color: #6B47D6;">✓</span> Military-grade encryption &nbsp;&nbsp;
+                    <span style="color: #6B47D6;">•</span> &nbsp;&nbsp;
+                    <span style="color: #6B47D6;">✓</span> Odoo 17, 18 & 19
                 </p>
             </div>
         </div>
     </section>
 
     <!-- Stats Section -->
-    <section class="section-dark">
+    <section class="py-5" style="background-color: #0a0a0f; padding: 60px 20px;">
         <div class="container">
-            <div class="row">
-                <div class="col-md-3 col-6">
-                    <div class="stat-box">
-                        <div class="stat-value">RSA-4096</div>
-                        <div class="stat-label">Key Exchange</div>
-                    </div>
+            <div class="row text-center">
+                <div class="col-md-3 col-6 mb-3">
+                    <h3 class="mb-2" style="font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, #8B6BE6 0%, #4F2FB3 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                        RSA-4096
+                    </h3>
+                    <p style="color: #a1a1aa; font-size: 0.9rem;">Key Exchange</p>
                 </div>
-                <div class="col-md-3 col-6">
-                    <div class="stat-box">
-                        <div class="stat-value">AES-256</div>
-                        <div class="stat-label">Content Encryption</div>
-                    </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <h3 class="mb-2" style="font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, #8B6BE6 0%, #4F2FB3 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                        AES-256
+                    </h3>
+                    <p style="color: #a1a1aa; font-size: 0.9rem;">Content Encryption</p>
                 </div>
-                <div class="col-md-3 col-6">
-                    <div class="stat-box">
-                        <div class="stat-value">100 MB</div>
-                        <div class="stat-label">Per Attachment</div>
-                    </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <h3 class="mb-2" style="font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, #8B6BE6 0%, #4F2FB3 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                        100 MB
+                    </h3>
+                    <p style="color: #a1a1aa; font-size: 0.9rem;">Per Attachment</p>
                 </div>
-                <div class="col-md-3 col-6">
-                    <div class="stat-box">
-                        <div class="stat-value">Real-time</div>
-                        <div class="stat-label">Delivery Tracking</div>
-                    </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <h3 class="mb-2" style="font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, #8B6BE6 0%, #4F2FB3 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                        Real-time
+                    </h3>
+                    <p style="color: #a1a1aa; font-size: 0.9rem;">Delivery Tracking</p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Features Section -->
-    <section class="section-muted">
+    <section class="py-5" style="background-color: #1a1a24; padding-left: 30px; padding-right: 30px; border-radius: 24px; margin-top: 10px; border: 1px solid #2a2a3a;">
         <div class="container">
-            <h2 class="section-title text-center">
-                Built for <span class="text-gradient-ochat">Odoo Partners</span>
+            <h2 class="text-center mb-3" style="font-size: 2rem; font-weight: 700; color: #f5f5f7;">
+                Built for <span style="background: linear-gradient(135deg, #8B6BE6 0%, #4F2FB3 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Odoo Partners</span>
             </h2>
-            <p class="section-subtitle text-center">
+            <p class="text-center mb-5" style="font-size: 1.1rem; color: #a1a1aa; max-width: 600px; margin-left: auto; margin-right: auto;">
                 The professional way to communicate with your Odoo clients
             </p>
 
             <div class="row">
                 <div class="col-lg-4 col-md-6 mb-4">
-                    <div class="card">
-                        <div class="feature-icon">💬</div>
-                        <h4 style="font-weight: 600; margin-bottom: 12px;">Direct Messaging</h4>
-                        <p style="color: var(--text-muted); margin-bottom: 0;">
-                            Chat directly with your clients' Odoo instances. No email chains, no external tools — just seamless communication within Discuss.
-                        </p>
+                    <div class="card h-100" style="border-radius: 16px; border: 1px solid #2a2a3a; background: #12121a;">
+                        <div class="card-body" style="padding: 30px;">
+                            <div style="width: 56px; height: 56px; border-radius: 14px; background: linear-gradient(135deg, rgba(107,71,214,0.2) 0%, rgba(79,47,179,0.1) 100%); display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 1.5rem;">💬</div>
+                            <h4 style="font-weight: 600; margin-bottom: 12px; color: #f5f5f7;">Direct Messaging</h4>
+                            <p style="color: #a1a1aa; margin-bottom: 0;">
+                                Chat directly with your clients' Odoo instances. No email chains, no external tools — just seamless communication within Discuss.
+                            </p>
+                        </div>
                     </div>
                 </div>
+
                 <div class="col-lg-4 col-md-6 mb-4">
-                    <div class="card">
-                        <div class="feature-icon">🔐</div>
-                        <h4 style="font-weight: 600; margin-bottom: 12px;">End-to-End Encryption</h4>
-                        <p style="color: var(--text-muted); margin-bottom: 0;">
-                            Messages are encrypted before leaving your server. Not even our central server can read your conversations.
-                        </p>
+                    <div class="card h-100" style="border-radius: 16px; border: 1px solid #2a2a3a; background: #12121a;">
+                        <div class="card-body" style="padding: 30px;">
+                            <div style="width: 56px; height: 56px; border-radius: 14px; background: linear-gradient(135deg, rgba(107,71,214,0.2) 0%, rgba(79,47,179,0.1) 100%); display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 1.5rem;">🔐</div>
+                            <h4 style="font-weight: 600; margin-bottom: 12px; color: #f5f5f7;">End-to-End Encryption</h4>
+                            <p style="color: #a1a1aa; margin-bottom: 0;">
+                                Messages are encrypted before leaving your server. Not even our central server can read your conversations.
+                            </p>
+                        </div>
                     </div>
                 </div>
+
                 <div class="col-lg-4 col-md-6 mb-4">
-                    <div class="card">
-                        <div class="feature-icon">🎫</div>
-                        <h4 style="font-weight: 600; margin-bottom: 12px;">Helpdesk Integration</h4>
-                        <p style="color: var(--text-muted); margin-bottom: 0;">
-                            Turn any conversation into a trackable support ticket with <code style="color: var(--ochat-400);">/ticket</code>. Perfect for client escalations.
-                        </p>
+                    <div class="card h-100" style="border-radius: 16px; border: 1px solid #2a2a3a; background: #12121a;">
+                        <div class="card-body" style="padding: 30px;">
+                            <div style="width: 56px; height: 56px; border-radius: 14px; background: linear-gradient(135deg, rgba(107,71,214,0.2) 0%, rgba(79,47,179,0.1) 100%); display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 1.5rem;">🎫</div>
+                            <h4 style="font-weight: 600; margin-bottom: 12px; color: #f5f5f7;">Helpdesk Integration</h4>
+                            <p style="color: #a1a1aa; margin-bottom: 0;">
+                                Turn any conversation into a trackable support ticket with <code style="color: #8B6BE6;">/ticket</code>. Perfect for client escalations.
+                            </p>
+                        </div>
                     </div>
                 </div>
+
                 <div class="col-lg-4 col-md-6 mb-4">
-                    <div class="card">
-                        <div class="feature-icon">👥</div>
-                        <h4 style="font-weight: 600; margin-bottom: 12px;">Team Collaboration</h4>
-                        <p style="color: var(--text-muted); margin-bottom: 0;">
-                            Add team members to any O'Chat channel. Full conversation history is preserved when members join or leave.
-                        </p>
+                    <div class="card h-100" style="border-radius: 16px; border: 1px solid #2a2a3a; background: #12121a;">
+                        <div class="card-body" style="padding: 30px;">
+                            <div style="width: 56px; height: 56px; border-radius: 14px; background: linear-gradient(135deg, rgba(107,71,214,0.2) 0%, rgba(79,47,179,0.1) 100%); display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 1.5rem;">👥</div>
+                            <h4 style="font-weight: 600; margin-bottom: 12px; color: #f5f5f7;">Team Collaboration</h4>
+                            <p style="color: #a1a1aa; margin-bottom: 0;">
+                                Add team members to any O'Chat channel. Full conversation history is preserved when members join or leave.
+                            </p>
+                        </div>
                     </div>
                 </div>
+
                 <div class="col-lg-4 col-md-6 mb-4">
-                    <div class="card">
-                        <div class="feature-icon">📎</div>
-                        <h4 style="font-weight: 600; margin-bottom: 12px;">Encrypted File Sharing</h4>
-                        <p style="color: var(--text-muted); margin-bottom: 0;">
-                            Share files up to 100MB with the same encryption as messages. Documents, images — all protected.
-                        </p>
+                    <div class="card h-100" style="border-radius: 16px; border: 1px solid #2a2a3a; background: #12121a;">
+                        <div class="card-body" style="padding: 30px;">
+                            <div style="width: 56px; height: 56px; border-radius: 14px; background: linear-gradient(135deg, rgba(107,71,214,0.2) 0%, rgba(79,47,179,0.1) 100%); display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 1.5rem;">📎</div>
+                            <h4 style="font-weight: 600; margin-bottom: 12px; color: #f5f5f7;">Encrypted File Sharing</h4>
+                            <p style="color: #a1a1aa; margin-bottom: 0;">
+                                Share files up to 100MB with the same encryption as messages. Documents, images — all protected.
+                            </p>
+                        </div>
                     </div>
                 </div>
+
                 <div class="col-lg-4 col-md-6 mb-4">
-                    <div class="card">
-                        <div class="feature-icon">✓✓</div>
-                        <h4 style="font-weight: 600; margin-bottom: 12px;">Delivery Tracking</h4>
-                        <p style="color: var(--text-muted); margin-bottom: 0;">
-                            WhatsApp-style indicators show when messages are sent, delivered, and read in real-time.
-                        </p>
+                    <div class="card h-100" style="border-radius: 16px; border: 1px solid #2a2a3a; background: #12121a;">
+                        <div class="card-body" style="padding: 30px;">
+                            <div style="width: 56px; height: 56px; border-radius: 14px; background: linear-gradient(135deg, rgba(107,71,214,0.2) 0%, rgba(79,47,179,0.1) 100%); display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 1.5rem;">✓✓</div>
+                            <h4 style="font-weight: 600; margin-bottom: 12px; color: #f5f5f7;">Delivery Tracking</h4>
+                            <p style="color: #a1a1aa; margin-bottom: 0;">
+                                WhatsApp-style indicators show when messages are sent, delivered, and read in real-time.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -418,40 +166,40 @@
     </section>
 
     <!-- How It Works Section -->
-    <section class="section-dark">
+    <section class="py-5" style="background-color: #0a0a0f; padding: 60px 20px;">
         <div class="container">
-            <h2 class="section-title text-center">
-                How <span class="text-gradient-ochat">O'Chat</span> Works
+            <h2 class="text-center mb-3" style="font-size: 2rem; font-weight: 700; color: #f5f5f7;">
+                How <span style="background: linear-gradient(135deg, #8B6BE6 0%, #4F2FB3 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">O'Chat</span> Works
             </h2>
-            <p class="section-subtitle text-center">
+            <p class="text-center mb-5" style="font-size: 1.1rem; color: #a1a1aa; max-width: 600px; margin-left: auto; margin-right: auto;">
                 Peer-to-peer communication with zero-knowledge architecture
             </p>
 
             <div class="row mb-5">
                 <div class="col-12">
-                    <div class="info-box">
-                        <h5 class="info-box-title mb-3">🔒 Encryption Flow</h5>
-                        <div class="encryption-flow">
-                            <div class="encryption-step">
-                                <strong>Your Odoo</strong>
-                                <p class="mb-0">
+                    <div style="background: linear-gradient(135deg, rgba(107,71,214,0.1) 0%, rgba(79,47,179,0.05) 100%); border: 1px solid rgba(107,71,214,0.2); border-radius: 16px; padding: 24px;">
+                        <h5 style="color: #8B6BE6; font-weight: 600;" class="mb-3">🔒 Encryption Flow</h5>
+                        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 15px;">
+                            <div style="background: #12121a; border: 1px solid #2a2a3a; border-radius: 12px; padding: 20px; text-align: center; flex: 1; min-width: 180px;">
+                                <strong style="color: #f5f5f7;">Your Odoo</strong>
+                                <p class="mb-0" style="color: #a1a1aa; font-size: 0.85rem;">
                                     1. Create message<br>
                                     2. Encrypt with AES<br>
                                     3. Wrap key with RSA
                                 </p>
                             </div>
-                            <div class="encryption-arrow">→</div>
-                            <div class="encryption-step">
-                                <strong>Central Server</strong>
-                                <p class="mb-0">
+                            <div style="color: #6B47D6; font-size: 1.5rem; font-weight: bold;">→</div>
+                            <div style="background: #12121a; border: 1px solid #2a2a3a; border-radius: 12px; padding: 20px; text-align: center; flex: 1; min-width: 180px;">
+                                <strong style="color: #f5f5f7;">Central Server</strong>
+                                <p class="mb-0" style="color: #a1a1aa; font-size: 0.85rem;">
                                     Routes encrypted data<br>
                                     <span style="color: #fbbf24;">Cannot read content</span>
                                 </p>
                             </div>
-                            <div class="encryption-arrow">→</div>
-                            <div class="encryption-step">
-                                <strong>Recipient's Odoo</strong>
-                                <p class="mb-0">
+                            <div style="color: #6B47D6; font-size: 1.5rem; font-weight: bold;">→</div>
+                            <div style="background: #12121a; border: 1px solid #2a2a3a; border-radius: 12px; padding: 20px; text-align: center; flex: 1; min-width: 180px;">
+                                <strong style="color: #f5f5f7;">Recipient's Odoo</strong>
+                                <p class="mb-0" style="color: #a1a1aa; font-size: 0.85rem;">
                                     1. Unwrap key with RSA<br>
                                     2. Decrypt with AES<br>
                                     3. Display message
@@ -462,88 +210,96 @@
                 </div>
             </div>
 
-            <div class="row">
+            <div class="row text-center">
                 <div class="col-md-4 mb-4">
-                    <div class="text-center">
-                        <div class="step-number">1</div>
-                        <h5 style="font-weight: 600;">Install & Register</h5>
-                        <p style="color: var(--text-muted);">
-                            Install O'Chat and register your instance. Your RSA-4096 key pair is generated automatically.
-                        </p>
-                    </div>
+                    <div style="width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #6B47D6 0%, #4F2FB3 100%); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.2rem; margin: 0 auto 15px; color: #f5f5f7;">1</div>
+                    <h5 style="font-weight: 600; color: #f5f5f7;">Install & Register</h5>
+                    <p style="color: #a1a1aa;">
+                        Install O'Chat and register your instance. Your RSA-4096 key pair is generated automatically.
+                    </p>
                 </div>
                 <div class="col-md-4 mb-4">
-                    <div class="text-center">
-                        <div class="step-number">2</div>
-                        <h5 style="font-weight: 600;">Connect Partners</h5>
-                        <p style="color: var(--text-muted);">
-                            Exchange Instance UUIDs with your partners. Accept connection requests to start chatting.
-                        </p>
-                    </div>
+                    <div style="width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #6B47D6 0%, #4F2FB3 100%); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.2rem; margin: 0 auto 15px; color: #f5f5f7;">2</div>
+                    <h5 style="font-weight: 600; color: #f5f5f7;">Connect Partners</h5>
+                    <p style="color: #a1a1aa;">
+                        Exchange Instance UUIDs with your partners. Accept connection requests to start chatting.
+                    </p>
                 </div>
                 <div class="col-md-4 mb-4">
-                    <div class="text-center">
-                        <div class="step-number">3</div>
-                        <h5 style="font-weight: 600;">Start Messaging</h5>
-                        <p style="color: var(--text-muted);">
-                            Send encrypted messages, share files, and use slash commands — all within Odoo Discuss.
-                        </p>
-                    </div>
+                    <div style="width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #6B47D6 0%, #4F2FB3 100%); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.2rem; margin: 0 auto 15px; color: #f5f5f7;">3</div>
+                    <h5 style="font-weight: 600; color: #f5f5f7;">Start Messaging</h5>
+                    <p style="color: #a1a1aa;">
+                        Send encrypted messages, share files, and use slash commands — all within Odoo Discuss.
+                    </p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Slash Commands Section -->
-    <section class="section-muted">
+    <section class="py-5" style="background-color: #1a1a24; padding-left: 30px; padding-right: 30px; border-radius: 24px; margin-top: 10px; border: 1px solid #2a2a3a;">
         <div class="container">
-            <h2 class="section-title text-center">
-                Powerful <span class="text-gradient-ochat">Slash Commands</span>
+            <h2 class="text-center mb-3" style="font-size: 2rem; font-weight: 700; color: #f5f5f7;">
+                Powerful <span style="background: linear-gradient(135deg, #8B6BE6 0%, #4F2FB3 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Slash Commands</span>
             </h2>
-            <p class="section-subtitle text-center">
+            <p class="text-center mb-5" style="font-size: 1.1rem; color: #a1a1aa; max-width: 600px; margin-left: auto; margin-right: auto;">
                 Quick actions at your fingertips
             </p>
 
             <div class="row justify-content-center">
                 <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card">
-                        <div class="command-box mb-3">/help</div>
-                        <p style="color: var(--text-muted); margin-bottom: 0;">
-                            Display all available commands in the current O'Chat channel.
-                        </p>
+                    <div class="card h-100" style="border-radius: 16px; border: 1px solid #2a2a3a; background: #12121a;">
+                        <div class="card-body" style="padding: 30px;">
+                            <div style="background: #0a0a0f; border: 1px solid #2a2a3a; border-radius: 8px; padding: 12px 20px; font-family: 'Monaco', 'Menlo', 'Consolas', monospace; font-size: 0.95rem; color: #8B6BE6; margin-bottom: 15px;">/help</div>
+                            <p style="color: #a1a1aa; margin-bottom: 0;">
+                                Display all available commands in the current O'Chat channel.
+                            </p>
+                        </div>
                     </div>
                 </div>
+
                 <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card">
-                        <div class="command-box mb-3">/status</div>
-                        <p style="color: var(--text-muted); margin-bottom: 0;">
-                            Show connection status, encryption details, and remote instance info.
-                        </p>
+                    <div class="card h-100" style="border-radius: 16px; border: 1px solid #2a2a3a; background: #12121a;">
+                        <div class="card-body" style="padding: 30px;">
+                            <div style="background: #0a0a0f; border: 1px solid #2a2a3a; border-radius: 8px; padding: 12px 20px; font-family: 'Monaco', 'Menlo', 'Consolas', monospace; font-size: 0.95rem; color: #8B6BE6; margin-bottom: 15px;">/status</div>
+                            <p style="color: #a1a1aa; margin-bottom: 0;">
+                                Show connection status, encryption details, and remote instance info.
+                            </p>
+                        </div>
                     </div>
                 </div>
+
                 <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card">
-                        <div class="command-box mb-3">/who</div>
-                        <p style="color: var(--text-muted); margin-bottom: 0;">
-                            List all members with access to the current channel.
-                        </p>
+                    <div class="card h-100" style="border-radius: 16px; border: 1px solid #2a2a3a; background: #12121a;">
+                        <div class="card-body" style="padding: 30px;">
+                            <div style="background: #0a0a0f; border: 1px solid #2a2a3a; border-radius: 8px; padding: 12px 20px; font-family: 'Monaco', 'Menlo', 'Consolas', monospace; font-size: 0.95rem; color: #8B6BE6; margin-bottom: 15px;">/who</div>
+                            <p style="color: #a1a1aa; margin-bottom: 0;">
+                                List all members with access to the current channel.
+                            </p>
+                        </div>
                     </div>
                 </div>
+
                 <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card">
-                        <div class="command-box mb-3">/ticket</div>
-                        <p style="color: var(--text-muted); margin-bottom: 0;">
-                            Create a helpdesk ticket from the conversation.
-                            <span class="badge-warning ms-1">Requires Helpdesk</span>
-                        </p>
+                    <div class="card h-100" style="border-radius: 16px; border: 1px solid #2a2a3a; background: #12121a;">
+                        <div class="card-body" style="padding: 30px;">
+                            <div style="background: #0a0a0f; border: 1px solid #2a2a3a; border-radius: 8px; padding: 12px 20px; font-family: 'Monaco', 'Menlo', 'Consolas', monospace; font-size: 0.95rem; color: #8B6BE6; margin-bottom: 15px;">/ticket</div>
+                            <p style="color: #a1a1aa; margin-bottom: 0;">
+                                Create a helpdesk ticket from the conversation.
+                                <span style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); font-size: 0.75rem; padding: 4px 10px; border-radius: 20px; margin-left: 4px;">Requires Helpdesk</span>
+                            </p>
+                        </div>
                     </div>
                 </div>
+
                 <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card">
-                        <div class="command-box mb-3">/leave</div>
-                        <p style="color: var(--text-muted); margin-bottom: 0;">
-                            Remove yourself from the current channel.
-                        </p>
+                    <div class="card h-100" style="border-radius: 16px; border: 1px solid #2a2a3a; background: #12121a;">
+                        <div class="card-body" style="padding: 30px;">
+                            <div style="background: #0a0a0f; border: 1px solid #2a2a3a; border-radius: 8px; padding: 12px 20px; font-family: 'Monaco', 'Menlo', 'Consolas', monospace; font-size: 0.95rem; color: #8B6BE6; margin-bottom: 15px;">/leave</div>
+                            <p style="color: #a1a1aa; margin-bottom: 0;">
+                                Remove yourself from the current channel.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -551,109 +307,143 @@
     </section>
 
     <!-- Security Section -->
-    <section class="section-dark">
+    <section class="py-5" style="background-color: #0a0a0f; padding: 60px 20px;">
         <div class="container">
-            <h2 class="section-title text-center">
-                Enterprise-Grade <span class="text-gradient-ochat">Security</span>
+            <h2 class="text-center mb-3" style="font-size: 2rem; font-weight: 700; color: #f5f5f7;">
+                Enterprise-Grade <span style="background: linear-gradient(135deg, #8B6BE6 0%, #4F2FB3 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Security</span>
             </h2>
-            <p class="section-subtitle text-center">
+            <p class="text-center mb-5" style="font-size: 1.1rem; color: #a1a1aa; max-width: 600px; margin-left: auto; margin-right: auto;">
                 Your messages are protected at every step
             </p>
 
             <div class="row mb-4">
                 <div class="col-md-6 mb-4">
-                    <div class="card">
-                        <h5 style="font-weight: 600; margin-bottom: 20px;">What's Encrypted</h5>
-                        <ul class="check-list">
-                            <li>Message content — Full E2E encryption</li>
-                            <li>File attachments — Encrypted with message</li>
-                            <li>File names — Included in encrypted payload</li>
-                        </ul>
+                    <div class="card h-100" style="border-radius: 16px; border: 1px solid #2a2a3a; background: #12121a;">
+                        <div class="card-body" style="padding: 30px;">
+                            <h5 style="font-weight: 600; margin-bottom: 20px; color: #f5f5f7;">What's Encrypted</h5>
+                            <ul class="list-unstyled">
+                                <li class="mb-2" style="color: #a1a1aa;"><span style="color: #6B47D6; font-weight: bold; margin-right: 10px;">✓</span> Message content — Full E2E encryption</li>
+                                <li class="mb-2" style="color: #a1a1aa;"><span style="color: #6B47D6; font-weight: bold; margin-right: 10px;">✓</span> File attachments — Encrypted with message</li>
+                                <li class="mb-2" style="color: #a1a1aa;"><span style="color: #6B47D6; font-weight: bold; margin-right: 10px;">✓</span> File names — Included in encrypted payload</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-6 mb-4">
-                    <div class="card">
-                        <h5 style="font-weight: 600; margin-bottom: 20px;">Technical Specifications</h5>
-                        <ul class="check-list">
-                            <li>RSA-4096 with OAEP padding (SHA-256)</li>
-                            <li>AES-256 in CBC mode with PKCS7</li>
-                            <li>Random 128-bit IV per message</li>
-                            <li>pycryptodome library</li>
-                        </ul>
+                    <div class="card h-100" style="border-radius: 16px; border: 1px solid #2a2a3a; background: #12121a;">
+                        <div class="card-body" style="padding: 30px;">
+                            <h5 style="font-weight: 600; margin-bottom: 20px; color: #f5f5f7;">Technical Specifications</h5>
+                            <ul class="list-unstyled">
+                                <li class="mb-2" style="color: #a1a1aa;"><span style="color: #6B47D6; font-weight: bold; margin-right: 10px;">✓</span> RSA-4096 with OAEP padding (SHA-256)</li>
+                                <li class="mb-2" style="color: #a1a1aa;"><span style="color: #6B47D6; font-weight: bold; margin-right: 10px;">✓</span> AES-256 in CBC mode with PKCS7</li>
+                                <li class="mb-2" style="color: #a1a1aa;"><span style="color: #6B47D6; font-weight: bold; margin-right: 10px;">✓</span> Random 128-bit IV per message</li>
+                                <li class="mb-2" style="color: #a1a1aa;"><span style="color: #6B47D6; font-weight: bold; margin-right: 10px;">✓</span> pycryptodome library</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="row text-center">
-                <div class="col-md-3 col-6 mb-4">
-                    <div style="font-size: 2rem; margin-bottom: 10px;">🔐</div>
-                    <h6 style="font-weight: 600;">Hybrid Encryption</h6>
-                    <p style="color: var(--text-muted); font-size: 0.85rem;">RSA for key exchange, AES for content</p>
+            <div class="row">
+                <div class="col-md-3 col-sm-6 mb-4">
+                    <div class="d-flex">
+                        <div class="me-3" style="font-size: 2rem;">🔐</div>
+                        <div>
+                            <h4 class="mb-2" style="font-weight: 600; color: #f5f5f7;">Hybrid Encryption</h4>
+                            <p style="color: #a1a1aa; font-size: 0.85rem;">RSA for key exchange, AES for content</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-3 col-6 mb-4">
-                    <div style="font-size: 2rem; margin-bottom: 10px;">🔑</div>
-                    <h6 style="font-weight: 600;">Auto Key Management</h6>
-                    <p style="color: var(--text-muted); font-size: 0.85rem;">Keys generated and stored automatically</p>
+                <div class="col-md-3 col-sm-6 mb-4">
+                    <div class="d-flex">
+                        <div class="me-3" style="font-size: 2rem;">🔑</div>
+                        <div>
+                            <h4 class="mb-2" style="font-weight: 600; color: #f5f5f7;">Auto Key Management</h4>
+                            <p style="color: #a1a1aa; font-size: 0.85rem;">Keys generated and stored automatically</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-3 col-6 mb-4">
-                    <div style="font-size: 2rem; margin-bottom: 10px;">🛡️</div>
-                    <h6 style="font-weight: 600;">Zero Knowledge</h6>
-                    <p style="color: var(--text-muted); font-size: 0.85rem;">Server never sees plaintext content</p>
+                <div class="col-md-3 col-sm-6 mb-4">
+                    <div class="d-flex">
+                        <div class="me-3" style="font-size: 2rem;">🛡️</div>
+                        <div>
+                            <h4 class="mb-2" style="font-weight: 600; color: #f5f5f7;">Zero Knowledge</h4>
+                            <p style="color: #a1a1aa; font-size: 0.85rem;">Server never sees plaintext content</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-3 col-6 mb-4">
-                    <div style="font-size: 2rem; margin-bottom: 10px;">📋</div>
-                    <h6 style="font-weight: 600;">Full History</h6>
-                    <p style="color: var(--text-muted); font-size: 0.85rem;">Complete message audit trail</p>
+                <div class="col-md-3 col-sm-6 mb-4">
+                    <div class="d-flex">
+                        <div class="me-3" style="font-size: 2rem;">📋</div>
+                        <div>
+                            <h4 class="mb-2" style="font-weight: 600; color: #f5f5f7;">Full History</h4>
+                            <p style="color: #a1a1aa; font-size: 0.85rem;">Complete message audit trail</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Use Cases Section -->
-    <section class="section-muted">
+    <section class="py-5" style="background-color: #1a1a24; padding-left: 30px; padding-right: 30px; border-radius: 24px; margin-top: 10px; border: 1px solid #2a2a3a;">
         <div class="container">
-            <h2 class="section-title text-center">
-                Perfect <span class="text-gradient-ochat">For</span>
+            <h2 class="text-center mb-3" style="font-size: 2rem; font-weight: 700; color: #f5f5f7;">
+                Perfect <span style="background: linear-gradient(135deg, #8B6BE6 0%, #4F2FB3 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">For</span>
             </h2>
-            <p class="section-subtitle text-center">
+            <p class="text-center mb-5" style="font-size: 1.1rem; color: #a1a1aa; max-width: 600px; margin-left: auto; margin-right: auto;">
                 O'Chat adapts to your business needs
             </p>
 
             <div class="row">
-                <div class="col-md-4 mb-4">
-                    <div class="card">
-                        <div style="font-size: 2rem; margin-bottom: 15px;">🤝</div>
-                        <h5 style="font-weight: 600; margin-bottom: 15px;">Odoo Partners</h5>
-                        <ul class="use-case-list">
-                            <li>Direct client communication</li>
-                            <li>Support ticket creation</li>
-                            <li>File sharing for projects</li>
-                            <li>Team handover with history</li>
-                        </ul>
+                <div class="col-md-4 col-sm-6 mb-4">
+                    <div class="card h-100" style="border-radius: 16px; border: 1px solid #2a2a3a; background: #12121a;">
+                        <div class="card-body" style="padding: 35px;">
+                            <div style="font-size: 2.5rem; margin-bottom: 15px;">🤝</div>
+                            <h4 class="mb-3" style="font-size: 1.3rem; font-weight: 600; color: #f5f5f7;">
+                                Odoo Partners
+                            </h4>
+                            <ul class="list-unstyled">
+                                <li class="mb-2" style="color: #a1a1aa;"><span style="color: #6B47D6; margin-right: 10px;">•</span> Direct client communication</li>
+                                <li class="mb-2" style="color: #a1a1aa;"><span style="color: #6B47D6; margin-right: 10px;">•</span> Support ticket creation</li>
+                                <li class="mb-2" style="color: #a1a1aa;"><span style="color: #6B47D6; margin-right: 10px;">•</span> File sharing for projects</li>
+                                <li class="mb-2" style="color: #a1a1aa;"><span style="color: #6B47D6; margin-right: 10px;">•</span> Team handover with history</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-4 mb-4">
-                    <div class="card">
-                        <div style="font-size: 2rem; margin-bottom: 15px;">🏢</div>
-                        <h5 style="font-weight: 600; margin-bottom: 15px;">Multi-Company Groups</h5>
-                        <ul class="use-case-list">
-                            <li>Connect subsidiary instances</li>
-                            <li>Cross-company collaboration</li>
-                            <li>Maintain data isolation</li>
-                            <li>Secure inter-company comms</li>
-                        </ul>
+
+                <div class="col-md-4 col-sm-6 mb-4">
+                    <div class="card h-100" style="border-radius: 16px; border: 1px solid #2a2a3a; background: #12121a;">
+                        <div class="card-body" style="padding: 35px;">
+                            <div style="font-size: 2.5rem; margin-bottom: 15px;">🏢</div>
+                            <h4 class="mb-3" style="font-size: 1.3rem; font-weight: 600; color: #f5f5f7;">
+                                Multi-Company Groups
+                            </h4>
+                            <ul class="list-unstyled">
+                                <li class="mb-2" style="color: #a1a1aa;"><span style="color: #6B47D6; margin-right: 10px;">•</span> Connect subsidiary instances</li>
+                                <li class="mb-2" style="color: #a1a1aa;"><span style="color: #6B47D6; margin-right: 10px;">•</span> Cross-company collaboration</li>
+                                <li class="mb-2" style="color: #a1a1aa;"><span style="color: #6B47D6; margin-right: 10px;">•</span> Maintain data isolation</li>
+                                <li class="mb-2" style="color: #a1a1aa;"><span style="color: #6B47D6; margin-right: 10px;">•</span> Secure inter-company comms</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-4 mb-4">
-                    <div class="card">
-                        <div style="font-size: 2rem; margin-bottom: 15px;">☁️</div>
-                        <h5 style="font-weight: 600; margin-bottom: 15px;">SaaS Providers</h5>
-                        <ul class="use-case-list">
-                            <li>Customer support chat</li>
-                            <li>Onboarding assistance</li>
-                            <li>Feature announcements</li>
-                            <li>Direct escalation path</li>
-                        </ul>
+
+                <div class="col-md-4 col-sm-6 mb-4">
+                    <div class="card h-100" style="border-radius: 16px; border: 1px solid #2a2a3a; background: #12121a;">
+                        <div class="card-body" style="padding: 35px;">
+                            <div style="font-size: 2.5rem; margin-bottom: 15px;">☁️</div>
+                            <h4 class="mb-3" style="font-size: 1.3rem; font-weight: 600; color: #f5f5f7;">
+                                SaaS Providers
+                            </h4>
+                            <ul class="list-unstyled">
+                                <li class="mb-2" style="color: #a1a1aa;"><span style="color: #6B47D6; margin-right: 10px;">•</span> Customer support chat</li>
+                                <li class="mb-2" style="color: #a1a1aa;"><span style="color: #6B47D6; margin-right: 10px;">•</span> Onboarding assistance</li>
+                                <li class="mb-2" style="color: #a1a1aa;"><span style="color: #6B47D6; margin-right: 10px;">•</span> Feature announcements</li>
+                                <li class="mb-2" style="color: #a1a1aa;"><span style="color: #6B47D6; margin-right: 10px;">•</span> Direct escalation path</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -661,27 +451,27 @@
     </section>
 
     <!-- Compatibility Section -->
-    <section class="section-dark">
+    <section class="py-5" style="background-color: #0a0a0f; padding: 60px 20px;">
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-md-6 mb-4">
-                    <h2 style="font-size: 1.8rem; font-weight: 700; margin-bottom: 20px;">
-                        Works With <span class="text-gradient-ochat">Your Setup</span>
+                    <h2 style="font-size: 1.8rem; font-weight: 700; margin-bottom: 20px; color: #f5f5f7;">
+                        Works With <span style="background: linear-gradient(135deg, #8B6BE6 0%, #4F2FB3 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Your Setup</span>
                     </h2>
-                    <ul class="check-list">
-                        <li><strong style="color: var(--text-primary);">Odoo 17, 18, and 19</strong> — Full compatibility</li>
-                        <li><strong style="color: var(--text-primary);">Community & Enterprise</strong> — Both editions supported</li>
-                        <li><strong style="color: var(--text-primary);">Odoo.sh & Self-hosted</strong> — Any deployment</li>
-                        <li><strong style="color: var(--text-primary);">Helpdesk Extension</strong> — Auto-installs if Helpdesk present</li>
+                    <ul class="list-unstyled">
+                        <li style="padding: 10px 0; color: #a1a1aa;"><span style="color: #6B47D6; font-weight: bold; margin-right: 12px;">✓</span> <strong style="color: #f5f5f7;">Odoo 17, 18, and 19</strong> — Full compatibility</li>
+                        <li style="padding: 10px 0; color: #a1a1aa;"><span style="color: #6B47D6; font-weight: bold; margin-right: 12px;">✓</span> <strong style="color: #f5f5f7;">Community & Enterprise</strong> — Both editions supported</li>
+                        <li style="padding: 10px 0; color: #a1a1aa;"><span style="color: #6B47D6; font-weight: bold; margin-right: 12px;">✓</span> <strong style="color: #f5f5f7;">Odoo.sh & Self-hosted</strong> — Any deployment</li>
+                        <li style="padding: 10px 0; color: #a1a1aa;"><span style="color: #6B47D6; font-weight: bold; margin-right: 12px;">✓</span> <strong style="color: #f5f5f7;">Helpdesk Extension</strong> — Auto-installs if Helpdesk present</li>
                     </ul>
                 </div>
                 <div class="col-md-6 mb-4">
-                    <div class="warning-box">
+                    <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 16px; padding: 24px;">
                         <h5 style="color: #fbbf24; font-weight: 600; margin-bottom: 12px;">⚠️ Requirements</h5>
-                        <ul class="use-case-list" style="margin: 0;">
-                            <li>Your Odoo must be accessible from the internet</li>
-                            <li>Webhook endpoint must be reachable</li>
-                            <li>Valid SSL certificate recommended</li>
+                        <ul class="list-unstyled" style="margin: 0;">
+                            <li style="padding: 6px 0; color: #a1a1aa; font-size: 0.95rem;"><span style="color: #6B47D6; margin-right: 10px;">•</span> Your Odoo must be accessible from the internet</li>
+                            <li style="padding: 6px 0; color: #a1a1aa; font-size: 0.95rem;"><span style="color: #6B47D6; margin-right: 10px;">•</span> Webhook endpoint must be reachable</li>
+                            <li style="padding: 6px 0; color: #a1a1aa; font-size: 0.95rem;"><span style="color: #6B47D6; margin-right: 10px;">•</span> Valid SSL certificate recommended</li>
                         </ul>
                     </div>
                 </div>
@@ -690,37 +480,35 @@
     </section>
 
     <!-- CTA Section -->
-    <section class="cta-section text-center">
+    <section class="py-5 text-center" style="background: linear-gradient(135deg, rgba(107,71,214,0.2) 0%, rgba(79,47,179,0.1) 100%); border: 1px solid rgba(107,71,214,0.3); border-radius: 24px; margin-top: 10px; padding: 60px 20px;">
         <div class="container">
-            <div class="logo-container">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 24px;">
                 <img src="ochat_logo.svg" alt="O'Chat" style="width: 56px; height: 56px;">
             </div>
-            <h2 class="mb-3" style="font-size: 2rem; font-weight: 700;">
-                Ready to Connect <span class="text-gradient-ochat">Securely</span>?
+            <h2 class="mb-3" style="font-size: 2rem; font-weight: 700; color: #f5f5f7;">
+                Ready to Connect <span style="background: linear-gradient(135deg, #8B6BE6 0%, #4F2FB3 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Securely</span>?
             </h2>
-            <p class="mb-4" style="font-size: 1.1rem; color: var(--text-muted); max-width: 500px; margin: 0 auto;">
+            <p class="mb-4" style="font-size: 1.1rem; color: #a1a1aa; max-width: 500px; margin: 0 auto;">
                 Start communicating with your Odoo partners and clients with enterprise-grade encryption.
             </p>
-            <div style="margin-top: 30px;">
-                <p style="font-size: 0.9rem; color: var(--text-muted);">
-                    <span class="text-ochat">✓</span> Easy setup &nbsp;&nbsp;
-                    <span class="text-ochat">•</span> &nbsp;&nbsp;
-                    <span class="text-ochat">✓</span> Zero-knowledge encryption &nbsp;&nbsp;
-                    <span class="text-ochat">•</span> &nbsp;&nbsp;
-                    <span class="text-ochat">✓</span> Helpdesk integration
-                </p>
-            </div>
+            <p style="font-size: 0.9rem; margin-top: 30px; color: #a1a1aa;">
+                <span style="color: #6B47D6;">✓</span> Easy setup &nbsp;&nbsp;
+                <span style="color: #6B47D6;">•</span> &nbsp;&nbsp;
+                <span style="color: #6B47D6;">✓</span> Zero-knowledge encryption &nbsp;&nbsp;
+                <span style="color: #6B47D6;">•</span> &nbsp;&nbsp;
+                <span style="color: #6B47D6;">✓</span> Helpdesk integration
+            </p>
         </div>
     </section>
 
     <!-- Footer Info -->
-    <section class="section-dark text-center" style="padding: 40px 20px;">
+    <section class="text-center" style="background-color: #0a0a0f; padding: 40px 20px;">
         <div class="container">
-            <p style="color: var(--text-muted); margin-bottom: 10px;">
-                Made with ❤️ by <strong style="color: var(--text-primary);">O'Solutions</strong>
+            <p style="color: #a1a1aa; margin-bottom: 10px;">
+                Made with ❤️ by <strong style="color: #f5f5f7;">O'Solutions</strong>
             </p>
-            <p style="color: var(--text-muted); font-size: 0.9rem;">
-                Documentation & Support: <a href="https://osolutions.app/docs/o-chat">osolutions.app/docs/o-chat</a>
+            <p style="color: #a1a1aa; font-size: 0.9rem;">
+                Documentation & Support: <a href="https://osolutions.dev/docs/o-chat" style="color: #6B47D6; text-decoration: none;">osolutions.dev/docs/o-chat</a>
             </p>
         </div>
     </section>
