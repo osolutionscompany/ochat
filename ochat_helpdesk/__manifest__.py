@@ -4,6 +4,9 @@
     'category': 'Discuss',
     'summary': 'Create helpdesk tickets from O\'Chat conversations',
     'depends': ['ochat', 'helpdesk'],
+    'author': 'O\'Solutions Company',
+    'website': 'https://osolutions.app',
+    'images': ['static/description/banner.png'],
     'data': [
         'security/ir.model.access.csv',
         'views/create_ticket_wizard_views.xml',

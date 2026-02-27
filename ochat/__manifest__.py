@@ -4,6 +4,9 @@
     'category': 'Discuss',
     'summary': 'Inter-instance communication for Odoo',
     'depends': ['base', 'mail'],
+    'author': 'O\'Solutions Company',
+    'website': 'https://www.osolutions.app',
+    'images': ['static/description/banner.png'],
     'external_dependencies': {
         'python': ['pycryptodome']
     },
